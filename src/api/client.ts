@@ -5,6 +5,12 @@ export type ItemType =
 
 export type Bonuses = Record<string, number>
 
+/** Bonuses that only apply from a refine level (`min`) or per every N refines. */
+export interface ConditionalBonuses {
+  refine?: { min: number; bonuses: Bonuses }[]
+  perRefine?: { every: number; bonuses: Bonuses }[]
+}
+
 export interface ItemSummary {
   id: number
   name: string
@@ -21,6 +27,7 @@ export interface ItemSummary {
   requiredLevel: number | null
   element: string | null
   bonuses: Bonuses
+  conditionalBonuses: ConditionalBonuses
   hasIcon: boolean
   /** ClassNum — headgear sprite id (0 = no sprite) */
   viewId: number

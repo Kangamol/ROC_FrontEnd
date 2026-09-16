@@ -47,8 +47,15 @@ export interface Derived {
   aspd: number
   maxHp: number
   maxSp: number
-  castTimeReduction: number
-  afterCastDelay: number
+  /** DEX-based variable cast reduction (pre-renewal: DEX/1.5 %) */
+  castTimeDex: number
+  /** Sum of variable cast time reduction from worn items (%) */
+  variableCastItems: number
+  /** Sum of fixed cast time reduction from worn items */
+  fixedCastSeconds: number
+  fixedCastPercent: number
+  /** Sum of after-cast delay reduction from worn items (%) */
+  afterCastDelayItems: number
   weight: number
   bonuses: Bonuses
 }
@@ -83,6 +90,15 @@ const JOB_GROWTH: Record<string, [number, number, number]> = {
   Ninja: [900, 500, 400], Gunslinger: [900, 500, 400],
 }
 
+/** Bonuses of one item at a given refine level (unconditional + refine-conditional). */
+export function itemBonusesAt(item: ItemSummary, refine: number): Bonuses {
+  const out: Bonuses = { ...item.bonuses }
+  const add = (b: Bonuses, times = 1) => { for (const [k, v] of Object.entries(b)) out[k] = (out[k] ?? 0) + v * times }
+  for (const r of item.conditionalBonuses?.refine ?? []) if (refine >= r.min) add(r.bonuses)
+  for (const r of item.conditionalBonuses?.perRefine ?? []) if (r.every > 0) add(r.bonuses, Math.floor(refine / r.every))
+  return out
+}
+
 export function sumBonuses(slots: EquippedSlot[]): Bonuses {
   const out: Bonuses = {}
   const add = (b: Bonuses | undefined) => {
@@ -90,8 +106,8 @@ export function sumBonuses(slots: EquippedSlot[]): Bonuses {
     for (const [k, v] of Object.entries(b)) out[k] = (out[k] ?? 0) + v
   }
   for (const s of slots) {
-    add(s.item?.bonuses)
-    for (const c of s.cards) add(c?.bonuses)
+    if (s.item) add(itemBonusesAt(s.item, s.refine))
+    for (const c of s.cards) if (c) add(itemBonusesAt(c, 0))
   }
   return out
 }
@@ -163,8 +179,11 @@ export function calculate(char: Character, slots: EquippedSlot[]): Derived {
     crit: 1 + total.luk * 0.3 + (b.crit ?? 0),
     aspd: Math.round(aspd * 10) / 10,
     maxHp, maxSp,
-    castTimeReduction: Math.min(100, Math.floor(total.dex / 1.5) + (b.castTimePercent ?? 0)),
-    afterCastDelay: b.afterCastDelayPercent ?? 0,
+    castTimeDex: Math.min(100, Math.floor(total.dex / 1.5)),
+    variableCastItems: b.variableCastPercent ?? 0,
+    fixedCastSeconds: b.fixedCastSeconds ?? 0,
+    fixedCastPercent: b.fixedCastPercent ?? 0,
+    afterCastDelayItems: b.afterCastDelayPercent ?? 0,
     weight,
     bonuses: b,
   }
