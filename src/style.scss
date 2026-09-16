@@ -1,0 +1,83 @@
+// Global tweaks on top of the Vuetify light theme (white / light blue / navy).
+$navy: #1e3a8a;
+$blue: #2563eb;
+$sky: #e8f1fc;
+$line: #cfe0f5;
+$text-muted: #5b6b8c;
+
+html, body {
+  background: #ffffff;
+}
+
+.ro-panel {
+  border: 1px solid $line;
+  background: linear-gradient(180deg, #ffffff, #f7fafe);
+  box-shadow: 0 1px 3px rgba(30, 58, 138, 0.06);
+}
+
+.ro-icon-box {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: $sky;
+  border: 1px solid $line;
+  image-rendering: pixelated;
+
+  img {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+  }
+}
+
+.ro-refine {
+  color: $blue;
+  font-weight: 700;
+}
+
+.ro-card-chip {
+  border: 1px dashed #9db8dc;
+  border-radius: 4px;
+  min-width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: $sky;
+
+  &:hover { border-color: $blue; }
+  img { width: 20px; height: 20px; image-rendering: pixelated; }
+}
+
+.ro-tooltip {
+  background: #ffffff;
+  color: #14213d;
+  border: 1px solid $line;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.15);
+  border-radius: 6px;
+  padding: 12px;
+  max-width: 360px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+
+  .ro-tooltip-title {
+    color: $navy;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .ro-desc-line { white-space: pre-wrap; color: #2b3a5c; min-height: 1em; }
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+  .stat-label { color: $text-muted; }
+  .stat-bonus { color: #15803d; margin-left: 4px; }
+}

@@ -1,0 +1,50 @@
+import type { ItemQuery } from '@/api/client'
+
+export interface SlotDef {
+  key: string
+  label: string
+  icon: string
+  group: 'gear' | 'costume'
+  /** Query used by the item picker for this slot. */
+  filter: ItemQuery
+  /** `cardLocation` values whose cards may be compounded into this slot. */
+  cardLocations: string[]
+  /** Refine allowed (weapons/armor only). */
+  refinable: boolean
+}
+
+export const SLOTS: SlotDef[] = [
+  { key: 'HEAD_TOP', label: 'Upper Head', icon: 'mdi-hat-fedora', group: 'gear', filter: { location: 'HEAD_TOP', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
+  { key: 'HEAD_MID', label: 'Middle Head', icon: 'mdi-glasses', group: 'gear', filter: { location: 'HEAD_MID', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
+  { key: 'HEAD_LOW', label: 'Lower Head', icon: 'mdi-emoticon-outline', group: 'gear', filter: { location: 'HEAD_LOW', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
+  { key: 'ARMOR', label: 'Armor', icon: 'mdi-tshirt-crew', group: 'gear', filter: { location: 'ARMOR', type: 'ARMOR' }, cardLocations: ['ARMOR'], refinable: true },
+  { key: 'WEAPON', label: 'Weapon', icon: 'mdi-sword', group: 'gear', filter: { location: 'WEAPON', type: 'WEAPON' }, cardLocations: ['WEAPON'], refinable: true },
+  { key: 'SHIELD', label: 'Shield', icon: 'mdi-shield', group: 'gear', filter: { location: 'SHIELD', type: 'ARMOR' }, cardLocations: ['SHIELD'], refinable: true },
+  { key: 'GARMENT', label: 'Garment', icon: 'mdi-weather-windy', group: 'gear', filter: { location: 'GARMENT', type: 'ARMOR' }, cardLocations: ['GARMENT'], refinable: true },
+  { key: 'SHOES', label: 'Footgear', icon: 'mdi-shoe-sneaker', group: 'gear', filter: { location: 'SHOES', type: 'ARMOR' }, cardLocations: ['SHOES'], refinable: true },
+  { key: 'ACCESSORY_1', label: 'Accessory 1', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_1', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_R'], refinable: false },
+  { key: 'ACCESSORY_2', label: 'Accessory 2', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_2', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_L'], refinable: false },
+  { key: 'AMMO', label: 'Ammunition', icon: 'mdi-arrow-projectile', group: 'gear', filter: { location: 'AMMO', type: 'AMMO' }, cardLocations: [], refinable: false },
+  { key: 'COSTUME_TOP', label: 'Costume Upper', icon: 'mdi-hat-fedora', group: 'costume', filter: { location: 'COSTUME_TOP', type: 'COSTUME' }, cardLocations: [], refinable: false },
+  { key: 'COSTUME_MID', label: 'Costume Middle', icon: 'mdi-glasses', group: 'costume', filter: { location: 'COSTUME_MID', type: 'COSTUME' }, cardLocations: [], refinable: false },
+  { key: 'COSTUME_LOW', label: 'Costume Lower', icon: 'mdi-emoticon-outline', group: 'costume', filter: { location: 'COSTUME_LOW', type: 'COSTUME' }, cardLocations: [], refinable: false },
+  { key: 'COSTUME_GARMENT', label: 'Costume Garment', icon: 'mdi-weather-windy', group: 'costume', filter: { location: 'COSTUME_GARMENT', type: 'COSTUME' }, cardLocations: [], refinable: false },
+]
+
+export const SLOT_MAP = Object.fromEntries(SLOTS.map((s) => [s.key, s])) as Record<string, SlotDef>
+
+/** Two-handed weapon subtypes occupy the shield slot as well. */
+export const TWO_HANDED = new Set([
+  'SWORD_2H', 'SPEAR_2H', 'AXE_2H', 'STAFF_2H', 'BOW', 'KATAR', 'INSTRUMENT', 'WHIP', 'HUUMA',
+  'RIFLE', 'SHOTGUN', 'GATLING', 'GRENADE_LAUNCHER',
+])
+
+export const JOB_CLASSES = [
+  'Novice', 'Swordman', 'Knight', 'Crusader', 'Lord Knight', 'Paladin',
+  'Magician', 'Wizard', 'Sage', 'High Wizard', 'Professor',
+  'Archer', 'Hunter', 'Bard', 'Dancer', 'Sniper', 'Clown', 'Gypsy',
+  'Acolyte', 'Priest', 'Monk', 'High Priest', 'Champion',
+  'Merchant', 'Blacksmith', 'Alchemist', 'Whitesmith', 'Creator',
+  'Thief', 'Assassin', 'Rogue', 'Assassin Cross', 'Stalker',
+  'Taekwon', 'Star Gladiator', 'Soul Linker', 'Ninja', 'Gunslinger', 'Super Novice',
+]
