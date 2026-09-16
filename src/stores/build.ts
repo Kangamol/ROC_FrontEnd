@@ -37,12 +37,15 @@ export const useBuildStore = defineStore('build', () => {
 
   const shieldBlocked = computed(() => isTwoHanded(slots.WEAPON!.item))
 
+  /** Card / enchant capacity of a slot: costume pieces always take one enchant stone. */
+  const capacity = (slotKey: string, item: ItemSummary) => SLOT_MAP[slotKey]?.enchantSlots ?? item.slotCount
+
   function equip(slotKey: string, item: ItemSummary | null) {
     const slot = slots[slotKey]
     if (!slot) return
     slot.item = item
     slot.refine = 0
-    slot.cards = item ? Array.from({ length: item.slotCount }, () => null) : []
+    slot.cards = item ? Array.from({ length: capacity(slotKey, item) }, () => null) : []
     shareCode.value = null
     // two-handed weapons kick the shield out
     if (slotKey === 'WEAPON' && isTwoHanded(item)) Object.assign(slots.SHIELD!, emptySlot())
@@ -57,7 +60,7 @@ export const useBuildStore = defineStore('build', () => {
 
   function setCard(slotKey: string, index: number, card: ItemSummary | null) {
     const slot = slots[slotKey]
-    if (!slot?.item || index >= slot.item.slotCount) return
+    if (!slot?.item || index >= capacity(slotKey, slot.item)) return
     slot.cards[index] = card
     shareCode.value = null
   }
@@ -117,7 +120,7 @@ export const useBuildStore = defineStore('build', () => {
       if (!slot || !s.item) continue
       slot.item = s.item
       slot.refine = s.refineLevel
-      slot.cards = Array.from({ length: s.item.slotCount }, (_, i) => [s.card1, s.card2, s.card3, s.card4][i] ?? null)
+      slot.cards = Array.from({ length: capacity(s.location, s.item) }, (_, i) => [s.card1, s.card2, s.card3, s.card4][i] ?? null)
     }
     shareCode.value = b.shareCode
   }

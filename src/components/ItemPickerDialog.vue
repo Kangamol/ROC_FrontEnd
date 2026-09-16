@@ -8,6 +8,8 @@ const props = defineProps<{
   filter: ItemQuery
   /** Card mode: filter by these cardLocation values (client-side OR) */
   cardLocations?: string[]
+  /** Card mode base query — defaults to `{ type: 'CARD' }`; costume slots use enchant stones instead */
+  cardFilter?: ItemQuery
 }>()
 const model = defineModel<boolean>({ default: false })
 const emit = defineEmits<{ select: [item: ItemSummary | null] }>()
@@ -31,7 +33,7 @@ const SLOT_OPTIONS = [
 
 const query = computed<ItemQuery>(() => {
   if (isCardMode.value) {
-    const q: ItemQuery = { type: 'CARD', search: search.value, limit: PAGE, offset: (page.value - 1) * PAGE }
+    const q: ItemQuery = { ...(props.cardFilter ?? { type: 'CARD' }), search: search.value, limit: PAGE, offset: (page.value - 1) * PAGE }
     // one cardLocation at a time on the API; when a slot accepts several (accessories)
     // or the user wants unparsed cards, fetch all and filter here.
     if (!allCards.value && props.cardLocations!.length === 1) q.cardLocation = props.cardLocations![0]
@@ -85,7 +87,7 @@ function pick(item: ItemSummary | null) {
         <div class="d-flex align-center flex-wrap" style="gap: 8px">
           <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="ค้นหาชื่อ / ID" clearable style="min-width: 220px" />
           <v-select v-if="!isCardMode" v-model="minSlots" :items="SLOT_OPTIONS" style="max-width: 130px" />
-          <v-switch v-else v-model="allCards" label="แสดงการ์ดทั้งหมด" color="accent" density="compact" hide-details />
+          <v-switch v-else v-model="allCards" :label="cardFilter ? 'แสดง stone ทุกตำแหน่ง' : 'แสดงการ์ดทั้งหมด'" color="accent" density="compact" hide-details />
           <span class="text-caption text-medium-emphasis">{{ total }} รายการ</span>
         </div>
         <div class="d-flex mt-2" style="gap: 12px">

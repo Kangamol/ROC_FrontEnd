@@ -47,11 +47,12 @@ function onCard(card: ItemSummary | null) {
           </template>
           <span v-else class="text-disabled">{{ disabled ? 'ถูกใช้โดยอาวุธสองมือ' : 'ว่าง' }}</span>
         </div>
-        <div v-if="slot().item && slot().item!.slotCount" class="d-flex mt-1" style="gap: 4px">
-          <div v-for="(card, i) in slot().cards" :key="i" class="ro-card-chip" :title="card?.name ?? 'ใส่การ์ด'" @click="openCard(i)">
+        <div v-if="slot().item && slot().cards.length" class="d-flex align-center mt-1" style="gap: 4px">
+          <div v-for="(card, i) in slot().cards" :key="i" class="ro-card-chip" :title="card?.name ?? (def.enchantSlots ? 'ใส่ enchant stone' : 'ใส่การ์ด')" @click="openCard(i)">
             <img v-if="card" :src="iconUrl(card.id)" alt="" />
-            <v-icon v-else icon="mdi-cards-outline" size="14" color="grey" />
+            <v-icon v-else :icon="def.enchantSlots ? 'mdi-diamond-stone' : 'mdi-cards-outline'" size="14" color="grey" />
           </div>
+          <span v-if="def.enchantSlots && slot().cards[0]" class="text-caption text-medium-emphasis text-truncate">{{ slot().cards[0]!.name }}</span>
         </div>
       </div>
 
@@ -69,9 +70,10 @@ function onCard(card: ItemSummary | null) {
     <ItemPickerDialog
       v-if="def.cardLocations.length"
       v-model="cardPickerOpen"
-      :title="`การ์ดช่อง ${cardIndex + 1} — ${slot().item?.name ?? ''}`"
+      :title="def.enchantSlots ? `Enchant — ${slot().item?.name ?? ''}` : `การ์ดช่อง ${cardIndex + 1} — ${slot().item?.name ?? ''}`"
       :filter="{}"
       :card-locations="def.cardLocations"
+      :card-filter="def.cardFilter"
       @select="onCard"
     />
   </v-card>

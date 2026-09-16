@@ -9,9 +9,19 @@ export interface SlotDef {
   filter: ItemQuery
   /** `cardLocation` values whose cards may be compounded into this slot. */
   cardLocations: string[]
+  /** Base query for the card/enchant picker (defaults to `{ type: 'CARD' }`). */
+  cardFilter?: ItemQuery
+  /** Fixed number of enchant slots regardless of the item's slotCount (costume enchant stones). */
+  enchantSlots?: number
   /** Refine allowed (weapons/armor only). */
   refinable: boolean
 }
+
+const costumeStone = (loc: string): Pick<SlotDef, 'cardLocations' | 'cardFilter' | 'enchantSlots'> => ({
+  cardLocations: [loc],
+  cardFilter: { type: 'ETC', subType: 'COSTUME_STONE' },
+  enchantSlots: 1,
+})
 
 export const SLOTS: SlotDef[] = [
   { key: 'HEAD_TOP', label: 'Upper Head', icon: 'mdi-hat-fedora', group: 'gear', filter: { location: 'HEAD_TOP', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
@@ -25,10 +35,10 @@ export const SLOTS: SlotDef[] = [
   { key: 'ACCESSORY_1', label: 'Accessory 1', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_1', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_R'], refinable: false },
   { key: 'ACCESSORY_2', label: 'Accessory 2', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_2', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_L'], refinable: false },
   { key: 'AMMO', label: 'Ammunition', icon: 'mdi-arrow-projectile', group: 'gear', filter: { location: 'AMMO', type: 'AMMO' }, cardLocations: [], refinable: false },
-  { key: 'COSTUME_TOP', label: 'Costume Upper', icon: 'mdi-hat-fedora', group: 'costume', filter: { location: 'COSTUME_TOP', type: 'COSTUME' }, cardLocations: [], refinable: false },
-  { key: 'COSTUME_MID', label: 'Costume Middle', icon: 'mdi-glasses', group: 'costume', filter: { location: 'COSTUME_MID', type: 'COSTUME' }, cardLocations: [], refinable: false },
-  { key: 'COSTUME_LOW', label: 'Costume Lower', icon: 'mdi-emoticon-outline', group: 'costume', filter: { location: 'COSTUME_LOW', type: 'COSTUME' }, cardLocations: [], refinable: false },
-  { key: 'COSTUME_GARMENT', label: 'Costume Garment', icon: 'mdi-weather-windy', group: 'costume', filter: { location: 'COSTUME_GARMENT', type: 'COSTUME' }, cardLocations: [], refinable: false },
+  { key: 'COSTUME_TOP', label: 'Costume Upper', icon: 'mdi-hat-fedora', group: 'costume', filter: { location: 'COSTUME_TOP', type: 'COSTUME' }, ...costumeStone('COSTUME_TOP'), refinable: false },
+  { key: 'COSTUME_MID', label: 'Costume Middle', icon: 'mdi-glasses', group: 'costume', filter: { location: 'COSTUME_MID', type: 'COSTUME' }, ...costumeStone('COSTUME_MID'), refinable: false },
+  { key: 'COSTUME_LOW', label: 'Costume Lower', icon: 'mdi-emoticon-outline', group: 'costume', filter: { location: 'COSTUME_LOW', type: 'COSTUME' }, ...costumeStone('COSTUME_LOW'), refinable: false },
+  { key: 'COSTUME_GARMENT', label: 'Costume Garment', icon: 'mdi-weather-windy', group: 'costume', filter: { location: 'COSTUME_GARMENT', type: 'COSTUME' }, ...costumeStone('COSTUME_GARMENT'), refinable: false },
 ]
 
 export const SLOT_MAP = Object.fromEntries(SLOTS.map((s) => [s.key, s])) as Record<string, SlotDef>
