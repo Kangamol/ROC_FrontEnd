@@ -1,8 +1,8 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 import { api, type BuildResponse, type ItemSummary } from '@/api/client'
 import { SLOTS, SLOT_MAP } from '@/lib/slots'
-import { calculate, isTwoHanded, type BaseStats, type EquippedSlot } from '@/lib/stats'
+import { calculate, isTwoHanded, type BaseStats, type EquippedSlot, type JobData } from '@/lib/stats'
 
 interface SlotState {
   item: ItemSummary | null
@@ -34,8 +34,12 @@ export const useBuildStore = defineStore('build', () => {
     SLOTS.map((s) => ({ key: s.key, item: slots[s.key]!.item, refine: slots[s.key]!.refine, cards: slots[s.key]!.cards })),
   )
 
+  /** Job tables from the API (base HP/SP, ASPD, job-level stats); engine falls back to approximations until loaded. */
+  const jobData = shallowRef<Record<string, JobData>>({})
+  api.jobs().then((d) => { jobData.value = d }).catch(() => { /* keep fallback */ })
+
   const derived = computed(() =>
-    calculate({ jobClass: jobClass.value, baseLevel: baseLevel.value, jobLevel: jobLevel.value, stats }, equipped.value),
+    calculate({ jobClass: jobClass.value, baseLevel: baseLevel.value, jobLevel: jobLevel.value, stats }, equipped.value, jobData.value[jobClass.value]),
   )
 
   const shieldBlocked = computed(() => isTwoHanded(slots.WEAPON!.item))

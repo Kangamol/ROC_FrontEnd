@@ -122,6 +122,9 @@ export const api = {
   build(shareCode: string) {
     return request<BuildResponse>(`/api/builds/${shareCode}`)
   },
+  jobs() {
+    return request<Record<string, import('@/lib/stats').JobData>>('/api/jobs')
+  },
 }
 
 export const iconUrl = (id: number) => `/assets/items/${id}.png`

@@ -19,8 +19,8 @@ const store = useBuildStore()
     <div v-for="k in STAT_KEYS" :key="k" class="d-flex align-center mb-1" style="gap: 8px">
       <span class="text-uppercase font-weight-bold" style="width: 34px">{{ k }}</span>
       <v-slider v-model="store.stats[k]" :min="1" :max="99" :step="1" hide-details density="compact" color="primary" class="flex-grow-1" />
-      <span style="width: 70px; text-align: right; font-variant-numeric: tabular-nums">
-        {{ store.stats[k] }}<span v-if="store.derived.bonus[k]" class="stat-bonus">+{{ store.derived.bonus[k] }}</span>
+      <span style="width: 84px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap">
+        {{ store.stats[k] }}<span v-if="store.derived.bonus[k] + store.derived.jobBonus[k]" class="stat-bonus" :title="`อาชีพ +${store.derived.jobBonus[k]}, ไอเทม +${store.derived.bonus[k]}`">+{{ store.derived.bonus[k] + store.derived.jobBonus[k] }}</span>
       </span>
     </div>
   </v-card>

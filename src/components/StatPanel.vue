@@ -16,7 +16,7 @@ const rows = computed(() => [
   { label: 'ASPD', value: d.value.aspd },
   { label: 'Max HP', value: d.value.maxHp.toLocaleString() },
   { label: 'Max SP', value: d.value.maxSp.toLocaleString() },
-  { label: 'Weight', value: d.value.weight },
+  { label: 'Weight', value: d.value.maxWeight ? `${d.value.weight / 10} / ${d.value.maxWeight / 10}` : d.value.weight / 10 },
 ])
 
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, ''))
@@ -41,6 +41,8 @@ const castRows = computed(() => [
       <span class="stat-label">{{ r.label }}</span>
       <span>{{ r.value }}<span v-if="r.hint" class="text-caption text-medium-emphasis ml-1">({{ r.hint }})</span></span>
     </div>
-    <div class="text-caption text-disabled mt-2">* สูตร pre-renewal โดยประมาณ — bonus มาจากการ parse description ของ client</div>
+    <div class="text-caption text-disabled mt-2">
+      * สูตร pre-renewal — HP/SP/ASPD จาก{{ d.usingJobTable ? 'ตารางอาชีพ (rAthena pre-re)' : 'ค่าประมาณ (โหลดตารางอาชีพไม่ได้)' }}; bonus มาจาก description ของ client
+    </div>
   </v-card>
 </template>
