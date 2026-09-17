@@ -10,6 +10,9 @@ interface SlotState {
   cards: (ItemSummary | null)[]
 }
 
+/** Classic server caps refining at +15 */
+export const MAX_REFINE = 15
+
 const emptySlot = (): SlotState => ({ item: null, refine: 0, cards: [] })
 
 export const useBuildStore = defineStore('build', () => {
@@ -54,7 +57,7 @@ export const useBuildStore = defineStore('build', () => {
   function setRefine(slotKey: string, refine: number) {
     const slot = slots[slotKey]
     if (!slot?.item || !SLOT_MAP[slotKey]?.refinable) return
-    slot.refine = Math.max(0, Math.min(20, refine))
+    slot.refine = Math.max(0, Math.min(MAX_REFINE, refine))
     shareCode.value = null
   }
 
