@@ -7,6 +7,7 @@ import CharacterPanel from '@/components/CharacterPanel.vue'
 import CharacterPreview from '@/components/CharacterPreview.vue'
 import EquipmentSlot from '@/components/EquipmentSlot.vue'
 import StatPanel from '@/components/StatPanel.vue'
+import EquipmentSummary from '@/components/EquipmentSummary.vue'
 
 const props = defineProps<{ shareCode?: string }>()
 const store = useBuildStore()
@@ -67,6 +68,7 @@ async function save() {
 
       <v-col cols="12" md="3">
         <StatPanel />
+        <EquipmentSummary class="mt-3" />
       </v-col>
     </v-row>
     <v-snackbar :model-value="!!snackbar" timeout="3000" @update:model-value="snackbar = null">{{ snackbar }}</v-snackbar>

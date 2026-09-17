@@ -5,10 +5,12 @@ export type ItemType =
 
 export type Bonuses = Record<string, number>
 
-/** Bonuses that only apply from a refine level (`min`) or per every N refines. */
+/** Bonuses that depend on refine level, base stats, or other worn items. */
 export interface ConditionalBonuses {
   refine?: { min: number; bonuses: Bonuses }[]
   perRefine?: { every: number; bonuses: Bonuses }[]
+  perStat?: { stat: 'str' | 'agi' | 'vit' | 'int' | 'dex' | 'luk'; every: number; max: number | null; bonuses: Bonuses }[]
+  set?: { requires: string[]; bonuses: Bonuses }[]
 }
 
 export interface ItemSummary {
@@ -28,6 +30,8 @@ export interface ItemSummary {
   element: string | null
   bonuses: Bonuses
   conditionalBonuses: ConditionalBonuses
+  /** Effect lines the parser could not read — not counted in stats */
+  unparsedLines: string[]
   hasIcon: boolean
   /** ClassNum — headgear sprite id (0 = no sprite) */
   viewId: number

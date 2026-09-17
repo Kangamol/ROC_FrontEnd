@@ -27,9 +27,6 @@ const castRows = computed(() => [
   { label: 'After-cast Delay (items)', value: `-${fmt(d.value.afterCastDelayItems)}%` },
 ])
 
-/** Bonuses the parser found but the engine does not use yet — shown so nothing is silently lost. */
-const KNOWN = new Set(['str', 'agi', 'vit', 'int', 'dex', 'luk', 'allStats', 'atk', 'atkPercent', 'matk', 'matkPercent', 'def', 'mdef', 'hit', 'flee', 'crit', 'perfectDodge', 'aspd', 'aspdPercent', 'maxHp', 'maxHpPercent', 'maxSp', 'maxSpPercent', 'variableCastPercent', 'fixedCastSeconds', 'fixedCastPercent', 'afterCastDelayPercent'])
-const extra = computed(() => Object.entries(d.value.bonuses).filter(([k]) => !KNOWN.has(k)))
 </script>
 
 <template>
@@ -44,11 +41,6 @@ const extra = computed(() => Object.entries(d.value.bonuses).filter(([k]) => !KN
       <span class="stat-label">{{ r.label }}</span>
       <span>{{ r.value }}<span v-if="r.hint" class="text-caption text-medium-emphasis ml-1">({{ r.hint }})</span></span>
     </div>
-    <template v-if="extra.length">
-      <v-divider class="my-2" />
-      <div class="text-caption text-medium-emphasis mb-1">Bonus อื่นจากไอเทม</div>
-      <div v-for="[k, v] in extra" :key="k" class="stat-row"><span class="stat-label">{{ k }}</span><span>+{{ v }}</span></div>
-    </template>
     <div class="text-caption text-disabled mt-2">* สูตร pre-renewal โดยประมาณ — bonus มาจากการ parse description ของ client</div>
   </v-card>
 </template>

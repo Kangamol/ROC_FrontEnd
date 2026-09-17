@@ -11,6 +11,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true, // listen on IPv4 + IPv6 so http://localhost works from every browser
     proxy: {
       // ElysiaJS API + extracted item icons
       '/api': 'http://localhost:3000',
