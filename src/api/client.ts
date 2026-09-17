@@ -45,6 +45,9 @@ export interface ItemDetail extends ItemSummary {
   jobs: string | null
   description: string
   descriptionLines: string[]
+  /** lines that were counted unconditionally / under a condition (cleaned text) */
+  parsedLines: string[]
+  conditionalLines: string[]
   hasCollection: boolean
 }
 

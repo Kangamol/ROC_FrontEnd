@@ -71,6 +71,17 @@ html, body {
     font-size: 0.95rem;
   }
   .ro-desc-line { white-space: pre-wrap; color: #2b3a5c; min-height: 1em; }
+
+  // which description lines the stat engine actually uses
+  .ro-desc-line.counted { color: #15803d; font-weight: 600; background: rgba(21, 128, 61, 0.07); border-radius: 3px; }
+  .ro-desc-line.conditional { color: #1d4ed8; background: rgba(37, 99, 235, 0.07); border-radius: 3px; }
+  .ro-desc-line.skipped { color: #8a94a8; text-decoration: line-through; }
+
+  .ro-legend {
+    display: flex; flex-wrap: wrap; gap: 4px 10px;
+    font-size: 0.7rem; color: $text-muted; border-top: 1px dashed $line; padding-top: 6px;
+    .counted { color: #15803d; } .conditional { color: #1d4ed8; } .skipped { color: #8a94a8; text-decoration: line-through; }
+  }
 }
 
 .stat-row {
