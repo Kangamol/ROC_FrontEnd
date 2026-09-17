@@ -81,6 +81,10 @@ export interface Derived {
 }
 
 /** Refine ATK bonus per +1 by weapon level (pre-renewal). */
+/** Flat bonus every accessory refine level grants on Gnjoy Classic (server-side, not in the client).
+ *  Confirmed by the user 2026-09-17: ATK +1, MATK +1, MaxHP +100, MaxSP +10 per level (item-specific refine bonuses stack on top). */
+export const ACCESSORY_REFINE_BONUS: Bonuses = { atk: 1, matk: 1, maxHp: 100, maxSp: 10 }
+
 const REFINE_ATK: Record<number, number> = { 1: 2, 2: 3, 3: 5, 4: 7 }
 
 /** Fallback only (used when /api/jobs is unavailable): approximate base weapon delay per weapon subtype. */
@@ -190,7 +194,7 @@ export function calculate(char: Character, slots: EquippedSlot[], job?: JobData)
   const subStat = isRanged ? total.str : total.dex
   const statusAtk = mainStat + Math.floor(mainStat / 10) ** 2 + Math.floor(subStat / 5) + Math.floor(total.luk / 5)
 
-  let weaponAtk = 0, weaponAtkRefine = 0, hardDef = 0, hardMdef = 0, weight = 0
+  let weaponAtk = 0, weaponAtkRefine = 0, hardDef = 0, hardMdef = 0, weight = 0, accessoryRefine = 0
   for (const s of slots) {
     const it = s.item
     if (!it) continue
@@ -199,12 +203,16 @@ export function calculate(char: Character, slots: EquippedSlot[], job?: JobData)
     if (s.key === 'WEAPON' || s.key === 'AMMO') {
       weaponAtk += it.atk ?? 0
       if (s.key === 'WEAPON') weaponAtkRefine += s.refine * (REFINE_ATK[it.weaponLevel ?? 1] ?? 2)
+    } else if (s.key === 'ACCESSORY_1' || s.key === 'ACCESSORY_2') {
+      hardDef += it.def ?? 0
+      accessoryRefine += s.refine // Gnjoy Classic lets accessories refine; no DEF from it
     } else {
       hardDef += it.def ?? 0
       hardDef += s.refine // armour refine: +1 DEF per level
     }
   }
   hardDef += b.def ?? 0
+  addAll(b, ACCESSORY_REFINE_BONUS, accessoryRefine)
   hardMdef += b.mdef ?? 0
 
   const matkMin = total.int + Math.floor(total.int / 7) ** 2 + (b.matk ?? 0) + (weapon?.item?.matk ?? 0)
