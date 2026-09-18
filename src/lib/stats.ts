@@ -146,7 +146,9 @@ export interface BonusContext {
 }
 
 const gateOk = (e: Gated, refine: number, ctx: BonusContext) =>
-  (e.refine == null || refine >= e.refine) && (e.requires == null || (ctx.isWorn != null && e.requires.every(ctx.isWorn)))
+  (e.refine == null || refine >= e.refine) &&
+  (e.requires == null || (ctx.isWorn != null && e.requires.every(ctx.isWorn))) &&
+  (e.baseStat == null || (ctx.base != null && ctx.base[e.baseStat.stat] >= e.baseStat.min))
 
 /**
  * Bonuses of one item at a given refine level: unconditional + everything whose condition holds
@@ -185,7 +187,7 @@ export function itemBonusesAt(item: ItemSummary, refine: number, ctx: BonusConte
  * (cards, stones and the item itself count). The same set text is usually
  * printed on every piece, so identical (members, bonuses) pairs count once.
  */
-export function activeSetBonuses(slots: EquippedSlot[]): { owner: ItemSummary; requires: string[]; bonuses: Bonuses }[] {
+export function activeSetBonuses(slots: EquippedSlot[], base?: BaseStats): { owner: ItemSummary; requires: string[]; bonuses: Bonuses }[] {
   const worn = wornList(slots)
   const isWorn = wornMatcher(slots)
   const seen = new Set<string>()
@@ -194,6 +196,7 @@ export function activeSetBonuses(slots: EquippedSlot[]): { owner: ItemSummary; r
     for (const set of item.conditionalBonuses?.set ?? []) {
       if (!set.requires.every(isWorn)) continue
       if (set.refine != null && refine < set.refine) continue
+      if (set.baseStat != null && (base == null || base[set.baseStat.stat] < set.baseStat.min)) continue
       const members = [...new Set([...set.requires.map(normName), normName(item.name)])].sort().join('|')
       const key = `${members}::${JSON.stringify(set.bonuses)}`
       if (seen.has(key)) continue
@@ -204,11 +207,17 @@ export function activeSetBonuses(slots: EquippedSlot[]): { owner: ItemSummary; r
   return out
 }
 
+/** Keys that do not add up: Gravity applies only the largest % fixed-cast reduction ("จะใช้งานค่าที่สูงที่สุด"). */
+const MAX_NOT_SUM = new Set(['fixedCastPercent'])
+
 export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: number): Bonuses {
   const ctx: BonusContext = { base, baseLevel, isWorn: wornMatcher(slots) }
   const out: Bonuses = {}
-  for (const { item, refine } of wornList(slots)) addAll(out, itemBonusesAt(item, refine, ctx)) // cards scale with the host item's refine
-  for (const set of activeSetBonuses(slots)) addAll(out, set.bonuses)
+  const merge = (b: Bonuses) => {
+    for (const [k, v] of Object.entries(b)) out[k] = MAX_NOT_SUM.has(k) ? Math.max(out[k] ?? 0, v) : (out[k] ?? 0) + v
+  }
+  for (const { item, refine } of wornList(slots)) merge(itemBonusesAt(item, refine, ctx)) // cards scale with the host item's refine
+  for (const set of activeSetBonuses(slots, base)) merge(set.bonuses)
   // DEF / MDEF cannot be ignored more than fully: High Wizard Card (100%) + Magician's Gloves (50%) is still 100%
   for (const k of Object.keys(out)) if (k.startsWith('ignoreDef:') || k.startsWith('ignoreMdef:')) out[k] = Math.min(out[k], 100)
   return out

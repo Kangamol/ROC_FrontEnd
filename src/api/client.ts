@@ -13,6 +13,8 @@ export type StatKey = 'str' | 'agi' | 'vit' | 'int' | 'dex' | 'luk'
 export interface Gated {
   refine?: number
   requires?: string[]
+  /** written under a "เมื่อ Base STR ตั้งแต่ 90 ขึ้นไป" header: also needs that base stat */
+  baseStat?: { stat: StatKey; min: number }
 }
 
 /**

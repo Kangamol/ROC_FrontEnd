@@ -82,6 +82,8 @@ function describe(key: string, value: number): Omit<EffectLine, 'polarity'> {
     case 'skillDamage': return { value: signed(value, '%'), label: `Damage สกิล ${a}`, group: 'skill' }
     case 'skillVct': return { value: `${fmt(value)}%`, label: `ลดระยะเวลาร่ายแบบแปรผันสกิล ${a}`, group: 'skill' }
     case 'skillDelay': return { value: `${fmt(value)}%`, label: `ลด Delay สกิล ${a}`, group: 'skill' }
+    case 'skillFct': return { value: `${fmt(value)}%`, label: `ลดระยะเวลาร่ายแบบคงที่สกิล ${a}`, group: 'skill' }
+    case 'skillFctSeconds': return { value: `${fmt(value)} วินาที`, label: `ลดระยะเวลาร่ายแบบคงที่สกิล ${a}`, group: 'skill' }
     case 'skill': return { value: `Lv.${fmt(value)}`, label: `สามารถใช้ ${a}`, group: 'skill' }
     case 'exp': return { value: signed(value, '%'), label: `EXP จากมอนสเตอร์ ${t}`, group: 'misc' }
     default: return { value: signed(value, ''), label: key, group: 'misc' }

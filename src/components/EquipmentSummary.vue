@@ -16,7 +16,7 @@ const groups = computed(() => {
   return GROUP_ORDER.filter((g) => byGroup.has(g)).map((g) => ({ key: g, label: GROUP_LABEL[g] ?? g, lines: byGroup.get(g)! }))
 })
 
-const sets = computed(() => activeSetBonuses(store.equipped))
+const sets = computed(() => activeSetBonuses(store.equipped, store.stats))
 
 /** Effect lines the parser could not read, per worn item — so it is clear what is NOT counted. */
 const unparsed = computed(() => {
