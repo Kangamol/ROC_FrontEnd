@@ -6,7 +6,7 @@
  * ASPD and job-level stat bonuses come from the per-job tables served by
  * /api/jobs (rAthena pre-renewal); built-in approximations are the fallback.
  */
-import type { Bonuses, Gated, ItemSummary } from '@/api/client'
+import type { Bonuses, ConditionalBonuses, Gated, ItemSummary } from '@/api/client'
 import { TWO_HANDED } from './slots'
 
 export interface BaseStats { str: number; agi: number; vit: number; int: number; dex: number; luk: number }
@@ -204,6 +204,13 @@ export function activeSetBonuses(slots: EquippedSlot[], base?: BaseStats): { own
       out.push({ owner: item, requires: set.requires, bonuses: set.bonuses })
     }
   }
+  return out
+}
+
+/** Skill-level bonuses of worn gear, for display only — the simulator has no skill tree, so they are never summed. */
+export function skillLevelNotes(slots: EquippedSlot[]): { owner: ItemSummary; entry: NonNullable<ConditionalBonuses['skillLevel']>[number] }[] {
+  const out: { owner: ItemSummary; entry: NonNullable<ConditionalBonuses['skillLevel']>[number] }[] = []
+  for (const { item } of wornList(slots)) for (const entry of item.conditionalBonuses?.skillLevel ?? []) out.push({ owner: item, entry })
   return out
 }
 

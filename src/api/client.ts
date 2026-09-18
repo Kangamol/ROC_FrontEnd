@@ -36,6 +36,8 @@ export interface ConditionalBonuses {
   perLevel?: ({ every: number; min: number | null; max: number | null; bonuses: Bonuses } & Gated)[]
   /** every named item / card must be worn */
   set?: ({ requires: string[]; bonuses: Bonuses } & Gated)[]
+  /** scales with (every) or needs (min) a learned skill level — listed for information, never summed (no skill tree yet) */
+  skillLevel?: ({ skill: string; every: number | null; min: number | null; bonuses: Bonuses } & Gated)[]
 }
 
 export interface ItemSummary {

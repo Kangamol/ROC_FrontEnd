@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useBuildStore } from '@/stores/build'
-import { activeSetBonuses } from '@/lib/stats'
+import { activeSetBonuses, skillLevelNotes } from '@/lib/stats'
 import { GROUP_LABEL, GROUP_ORDER, describeEffect } from '@/lib/effectLabels'
 
 const store = useBuildStore()
@@ -17,6 +17,20 @@ const groups = computed(() => {
 })
 
 const sets = computed(() => activeSetBonuses(store.equipped, store.stats))
+
+/** "ทุก ๆ Iron Hand 1 Lv: ATK +2" — shown with its condition, not added to the totals above. */
+const skillNotes = computed(() =>
+  skillLevelNotes(store.equipped).map(({ owner, entry }) => {
+    const gates = [
+      entry.refine != null ? `ตี +${entry.refine}` : '',
+      entry.requires?.length ? `ใส่ ${entry.requires.join(', ')}` : '',
+      entry.baseStat ? `Base ${entry.baseStat.stat.toUpperCase()} ≥ ${entry.baseStat.min}` : '',
+    ].filter(Boolean)
+    const when = entry.every != null ? `ทุก ๆ ${entry.every} Lv ของ ${entry.skill}` : `เรียน ${entry.skill} Lv.${entry.min} ขึ้นไป`
+    const lines = Object.entries(entry.bonuses).map(([k, v]) => describeEffect(k, v))
+    return { owner, when: gates.length ? `${when} (${gates.join(', ')})` : when, lines }
+  }),
+)
 
 /** Effect lines the parser could not read, per worn item — so it is clear what is NOT counted. */
 const unparsed = computed(() => {
@@ -48,6 +62,17 @@ const unparsed = computed(() => {
       <div class="text-caption text-medium-emphasis mb-1">Set bonus ที่ทำงานอยู่</div>
       <div v-for="s in sets" :key="s.owner.id + s.requires.join()" class="text-caption">
         <v-icon icon="mdi-link-variant" size="12" class="mr-1" />{{ s.owner.name }} + {{ s.requires.join(', ') }}
+      </div>
+    </template>
+
+    <template v-if="skillNotes.length">
+      <v-divider class="my-2" />
+      <div class="text-caption text-medium-emphasis mb-1"><v-icon icon="mdi-school-outline" size="12" class="mr-1" />โบนัสตามเลเวลสกิล — ยังไม่รวมในผลรวม (รอส่วนสกิล)</div>
+      <div v-for="(n, i) in skillNotes" :key="i" class="text-caption mb-1">
+        <div class="font-weight-medium">{{ n.owner.name }} <span class="text-medium-emphasis">[{{ n.when }}]</span></div>
+        <div v-for="l in n.lines" :key="l.label" class="summary-row pl-2">
+          <span class="summary-value" :class="l.polarity">{{ l.value }}</span><span class="summary-label">{{ l.label }}</span>
+        </div>
       </div>
     </template>
 
