@@ -36,6 +36,7 @@ const SIMPLE: Record<string, [label: string, unit: '' | '%' | 's', group: string
   str: ['STR', '', 'stat'], agi: ['AGI', '', 'stat'], vit: ['VIT', '', 'stat'], int: ['INT', '', 'stat'], dex: ['DEX', '', 'stat'], luk: ['LUK', '', 'stat'],
   allStats: ['All Stats', '', 'stat'],
   maxHp: ['MaxHP', '', 'stat'], maxHpPercent: ['MaxHP', '%', 'stat'], maxSp: ['MaxSP', '', 'stat'], maxSpPercent: ['MaxSP', '%', 'stat'],
+  hitPercent: ['Perfect Hit', '%', 'combat'],
   atk: ['ATK', '', 'combat'], atkPercent: ['ATK', '%', 'combat'], matk: ['MATK', '', 'combat'], matkPercent: ['MATK', '%', 'combat'],
   def: ['DEF', '', 'combat'], mdef: ['MDEF', '', 'combat'], hit: ['HIT', '', 'combat'], flee: ['FLEE', '', 'combat'],
   crit: ['CRI', '', 'combat'], critPercent: ['CRI', '%', 'combat'], perfectDodge: ['Perfect Dodge', '', 'combat'],

@@ -60,7 +60,7 @@ export function enchantSlotsView(item: ItemSummary, refine: number, enchants: (I
       unlocked: !needPrev && !wrongPrev && !lowRefine,
       lockReason: lowRefine ? `ต้องตี +${r.minRefine} ขึ้นไป`
         : needPrev ? 'ต้อง enchant ช่องก่อนหน้าก่อน'
-        : wrongPrev ? 'ช่องก่อนหน้าต้องเป็นออปชันระดับสูงสุด (Lv.4) ก่อน' : '',
+        : wrongPrev ? 'ช่องก่อนหน้าต้องอัพออปชันถึงระดับสูงสุดก่อน' : '',
     }
   })
 }
