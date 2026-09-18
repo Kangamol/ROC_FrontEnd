@@ -21,7 +21,16 @@ function target(kind: string, value: string) {
   return value
 }
 
-export interface EffectLine { value: string; label: string; group: string }
+/** good = green (a benefit), bad = red (a penalty), neutral = default colour (granted skills etc.). */
+export type Polarity = 'good' | 'bad' | 'neutral'
+export interface EffectLine { value: string; label: string; group: string; polarity: Polarity }
+
+/**
+ * Every parsed key is stored in the "positive = beneficial" direction — reductions (cast time,
+ * delay, damage taken, SP cost) are positive numbers — so the sign alone tells good from bad.
+ */
+export const polarityOf = (key: string, value: number): Polarity =>
+  key.startsWith('skill:') || value === 0 ? 'neutral' : value > 0 ? 'good' : 'bad'
 
 const SIMPLE: Record<string, [label: string, unit: '' | '%' | 's', group: string, reduction?: boolean]> = {
   str: ['STR', '', 'stat'], agi: ['AGI', '', 'stat'], vit: ['VIT', '', 'stat'], int: ['INT', '', 'stat'], dex: ['DEX', '', 'stat'], luk: ['LUK', '', 'stat'],
@@ -50,6 +59,10 @@ const signed = (n: number, unit: string, reduction = false) => {
 }
 
 export function describeEffect(key: string, value: number): EffectLine {
+  return { ...describe(key, value), polarity: polarityOf(key, value) }
+}
+
+function describe(key: string, value: number): Omit<EffectLine, 'polarity'> {
   const simple = SIMPLE[key]
   if (simple) {
     const [label, unit, group, reduction] = simple

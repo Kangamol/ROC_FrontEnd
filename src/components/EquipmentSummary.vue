@@ -34,10 +34,11 @@ const unparsed = computed(() => {
   <v-card class="ro-panel pa-3" variant="flat">
     <div class="text-subtitle-2 text-accent mb-2"><v-icon icon="mdi-format-list-bulleted" size="small" class="mr-1" />Equipment Status</div>
     <div v-if="!groups.length" class="text-caption text-medium-emphasis">ยังไม่มีโบนัสจากของสวมใส่</div>
+    <div v-else class="text-caption text-medium-emphasis mb-1"><span class="good">■</span> ผลดี <span class="bad ml-2">■</span> ผลเสีย</div>
     <template v-for="g in groups" :key="g.key">
       <div class="text-caption text-medium-emphasis mt-2 mb-1">{{ g.label }}</div>
       <div v-for="l in g.lines" :key="l.label + l.value" class="summary-row">
-        <span class="summary-value">{{ l.value }}</span>
+        <span class="summary-value" :class="l.polarity">{{ l.value }}</span>
         <span class="summary-label">{{ l.label }}</span>
       </div>
     </template>
@@ -62,6 +63,8 @@ const unparsed = computed(() => {
 </template>
 
 <style scoped lang="scss">
+.good { color: #15803d; }
+.bad { color: #dc2626; }
 .summary-row {
   display: flex;
   gap: 8px;
@@ -69,6 +72,8 @@ const unparsed = computed(() => {
   font-size: 0.82rem;
   line-height: 1.3;
   .summary-value { flex: 0 0 64px; text-align: right; color: #2563eb; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .summary-value.good { color: #15803d; }
+  .summary-value.bad { color: #dc2626; }
   .summary-label { color: #14213d; }
 }
 </style>

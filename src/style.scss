@@ -91,4 +91,5 @@ html, body {
   font-variant-numeric: tabular-nums;
   .stat-label { color: $text-muted; }
   .stat-bonus { color: #15803d; margin-left: 4px; }
+  .stat-bonus.bad { color: #dc2626; }
 }

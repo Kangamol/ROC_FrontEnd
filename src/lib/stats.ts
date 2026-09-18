@@ -209,6 +209,8 @@ export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: 
   const out: Bonuses = {}
   for (const { item, refine } of wornList(slots)) addAll(out, itemBonusesAt(item, refine, ctx)) // cards scale with the host item's refine
   for (const set of activeSetBonuses(slots)) addAll(out, set.bonuses)
+  // DEF / MDEF cannot be ignored more than fully: High Wizard Card (100%) + Magician's Gloves (50%) is still 100%
+  for (const k of Object.keys(out)) if (k.startsWith('ignoreDef:') || k.startsWith('ignoreMdef:')) out[k] = Math.min(out[k], 100)
   return out
 }
 

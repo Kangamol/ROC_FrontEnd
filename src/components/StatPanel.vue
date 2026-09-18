@@ -6,8 +6,8 @@ const store = useBuildStore()
 const d = computed(() => store.derived)
 
 const rows = computed(() => [
-  { label: 'ATK', value: `${d.value.statusAtk} + ${d.value.weaponAtk + d.value.weaponAtkRefine}${d.value.atkBonusFlat ? ` + ${d.value.atkBonusFlat}` : ''}${d.value.atkPercent ? ` (+${d.value.atkPercent}%)` : ''}` },
-  { label: 'MATK', value: `${d.value.matkMin} ~ ${d.value.matkMax}${d.value.matkPercent ? ` (+${d.value.matkPercent}%)` : ''}` },
+  { label: 'ATK', value: `${d.value.statusAtk} + ${d.value.weaponAtk + d.value.weaponAtkRefine}${d.value.atkBonusFlat ? ` + ${d.value.atkBonusFlat}` : ''}${d.value.atkPercent ? ` (${d.value.atkPercent > 0 ? '+' : ''}${d.value.atkPercent}%)` : ''}` },
+  { label: 'MATK', value: `${d.value.matkMin} ~ ${d.value.matkMax}${d.value.matkPercent ? ` (${d.value.matkPercent > 0 ? '+' : ''}${d.value.matkPercent}%)` : ''}` },
   { label: 'HIT', value: d.value.hit },
   { label: 'CRIT', value: d.value.crit.toFixed(1) },
   { label: 'DEF', value: `${d.value.hardDef} + ${d.value.softDef}` },
@@ -23,10 +23,11 @@ const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).repla
 /** Reductions are stored positive: 20 → "-20%"; a negative sum (e.g. High Wizard Card +100% cast time) → "+80%". */
 const red = (n: number, unit: string) => (n === 0 ? `0${unit}` : n > 0 ? `-${fmt(n)}${unit}` : `+${fmt(-n)}${unit}`)
 /** Cast / delay reductions summed from worn items only (no skill-specific effects). */
+const polarity = (n: number) => (n > 0 ? 'good' : n < 0 ? 'bad' : '')
 const castRows = computed(() => [
-  { label: 'Variable Cast (items)', value: red(d.value.variableCastItems, '%'), hint: `DEX ให้อีก -${d.value.castTimeDex}%` },
-  { label: 'Fixed Cast (items)', value: [d.value.fixedCastSeconds ? red(d.value.fixedCastSeconds, 's') : '', d.value.fixedCastPercent ? red(d.value.fixedCastPercent, '%') : ''].filter(Boolean).join(' ') || '0' },
-  { label: 'After-cast Delay (items)', value: red(d.value.afterCastDelayItems, '%') },
+  { label: 'Variable Cast (items)', value: red(d.value.variableCastItems, '%'), cls: polarity(d.value.variableCastItems), hint: `DEX ให้อีก -${d.value.castTimeDex}%` },
+  { label: 'Fixed Cast (items)', value: [d.value.fixedCastSeconds ? red(d.value.fixedCastSeconds, 's') : '', d.value.fixedCastPercent ? red(d.value.fixedCastPercent, '%') : ''].filter(Boolean).join(' ') || '0', cls: polarity(d.value.fixedCastSeconds || d.value.fixedCastPercent) },
+  { label: 'After-cast Delay (items)', value: red(d.value.afterCastDelayItems, '%'), cls: polarity(d.value.afterCastDelayItems) },
 ])
 
 </script>
@@ -41,10 +42,15 @@ const castRows = computed(() => [
     <div class="text-caption text-medium-emphasis mb-1">Cast / Delay จากของสวมใส่ (รวมโบนัสตามขั้นตีบวก)</div>
     <div v-for="r in castRows" :key="r.label" class="stat-row">
       <span class="stat-label">{{ r.label }}</span>
-      <span>{{ r.value }}<span v-if="r.hint" class="text-caption text-medium-emphasis ml-1">({{ r.hint }})</span></span>
+      <span><span :class="r.cls">{{ r.value }}</span><span v-if="r.hint" class="text-caption text-medium-emphasis ml-1">({{ r.hint }})</span></span>
     </div>
     <div class="text-caption text-disabled mt-2">
       * สูตร pre-renewal — HP/SP/ASPD จาก{{ d.usingJobTable ? 'ตารางอาชีพ (rAthena pre-re)' : 'ค่าประมาณ (โหลดตารางอาชีพไม่ได้)' }}; bonus มาจาก description ของ client
     </div>
   </v-card>
 </template>
+
+<style scoped lang="scss">
+.good { color: #15803d; font-weight: 600; }
+.bad { color: #dc2626; font-weight: 600; }
+</style>
