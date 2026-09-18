@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { api, type BuildResponse, type ItemSummary } from '@/api/client'
 import { SLOTS, SLOT_MAP } from '@/lib/slots'
 import { calculate, isTwoHanded, type BaseStats, type EquippedSlot, type JobData } from '@/lib/stats'
-import { enchantCapacity, enchantSlotsView, isEnchant, ruleFor, type EnchantPools } from '@/lib/enchant'
+import { clampOption, enchantCapacity, enchantSlotsView, isEnchant, ruleFor, type EnchantPools, type RolledOption } from '@/lib/enchant'
 
 interface SlotState {
   item: ItemSummary | null
@@ -11,12 +11,14 @@ interface SlotState {
   cards: (ItemSummary | null)[]
   /** NPC enchants by position order 4, 3, 2 (see lib/enchant.ts) */
   enchants: (ItemSummary | null)[]
+  /** rolled range options, one per rule row (Tengu B.Scroll …); null = row not rolled */
+  randomOptions: (RolledOption | null)[]
 }
 
 /** Classic server caps refining at +15 */
 export const MAX_REFINE = 15
 
-const emptySlot = (): SlotState => ({ item: null, refine: 0, cards: [], enchants: [] })
+const emptySlot = (): SlotState => ({ item: null, refine: 0, cards: [], enchants: [], randomOptions: [] })
 
 export const useBuildStore = defineStore('build', () => {
   const title = ref('My Build')
@@ -34,14 +36,21 @@ export const useBuildStore = defineStore('build', () => {
   const loadError = ref<string | null>(null)
 
   const equipped = computed<EquippedSlot[]>(() =>
-    SLOTS.map((s) => ({ key: s.key, item: slots[s.key]!.item, refine: slots[s.key]!.refine, cards: slots[s.key]!.cards, enchants: slots[s.key]!.enchants })),
+    SLOTS.map((s) => ({
+      key: s.key, item: slots[s.key]!.item, refine: slots[s.key]!.refine, cards: slots[s.key]!.cards, enchants: slots[s.key]!.enchants,
+      randomOptions: slots[s.key]!.randomOptions.filter((r): r is RolledOption => !!r),
+    })),
   )
 
   /** NPC enchant rules from the API (data/enchant_pools.json); no enchanting until loaded. */
   const enchantPools = shallowRef<EnchantPools | null>(null)
   api.enchantPools().then((p) => { enchantPools.value = p }).catch(() => { /* enchant UI stays hidden */ })
 
-  const enchantRule = (slotKey: string, item: ItemSummary) => (SLOT_MAP[slotKey]?.npcEnchant ? ruleFor(item, enchantPools.value) : null)
+  const enchantRule = (slotKey: string, item: ItemSummary) => {
+    const mode = SLOT_MAP[slotKey]?.npcEnchant
+    return mode ? ruleFor(item, enchantPools.value, mode === 'default') : null
+  }
+  const randomRows = (slotKey: string, item: ItemSummary) => enchantRule(slotKey, item)?.randomOptions?.length ?? 0
   // items equipped before the rules arrived (shared link) get their enchant slots once they do
   watch(enchantPools, () => {
     for (const s of SLOTS) {
@@ -49,6 +58,7 @@ export const useBuildStore = defineStore('build', () => {
       if (!slot.item) continue
       const n = enchantCapacity(slot.item, enchantRule(s.key, slot.item))
       slot.enchants = Array.from({ length: n }, (_, i) => slot.enchants[i] ?? null)
+      slot.randomOptions = Array.from({ length: randomRows(s.key, slot.item) }, (_, i) => slot.randomOptions[i] ?? null)
     }
   })
 
@@ -72,6 +82,7 @@ export const useBuildStore = defineStore('build', () => {
     slot.refine = 0
     slot.cards = item ? Array.from({ length: capacity(slotKey, item) }, () => null) : []
     slot.enchants = item ? Array.from({ length: enchantCapacity(item, enchantRule(slotKey, item)) }, () => null) : []
+    slot.randomOptions = item ? Array.from({ length: randomRows(slotKey, item) }, () => null) : []
     shareCode.value = null
     // two-handed weapons kick the shield out
     if (slotKey === 'WEAPON' && isTwoHanded(item)) Object.assign(slots.SHIELD!, emptySlot())
@@ -85,6 +96,15 @@ export const useBuildStore = defineStore('build', () => {
     for (const v of enchantSlotsView(slot.item, slot.refine, slot.enchants, enchantRule(slotKey, slot.item))) {
       if (slot.refine < v.minRefine) slot.enchants[v.index] = null
     }
+    shareCode.value = null
+  }
+
+  /** Pick / clear a random-option row: `key` from that row's options, `value` clamped to its range. */
+  function setRandomOption(slotKey: string, row: number, key: string | null, value: number) {
+    const slot = slots[slotKey]
+    if (!slot?.item || row >= slot.randomOptions.length) return
+    const def = enchantRule(slotKey, slot.item)?.randomOptions?.[row]?.options.find((o) => o.key === key)
+    slot.randomOptions[row] = def ? { key: def.key, value: clampOption(def, value) } : null
     shareCode.value = null
   }
 
@@ -132,6 +152,7 @@ export const useBuildStore = defineStore('build', () => {
             card2Id: st.cards[1]?.id ?? st.enchants[2]?.id ?? null,
             card3Id: st.cards[2]?.id ?? st.enchants[1]?.id ?? null,
             card4Id: st.cards[3]?.id ?? st.enchants[0]?.id ?? null,
+            randomOptions: st.randomOptions.filter((r): r is RolledOption => !!r),
           }
         }),
       })
@@ -162,6 +183,8 @@ export const useBuildStore = defineStore('build', () => {
       slot.cards = Array.from({ length: capacity(s.location, s.item) }, (_, i) => (isEnchant(stored[i]) ? null : stored[i]) ?? null)
       const n = enchantCapacity(s.item, enchantRule(s.location, s.item))
       slot.enchants = Array.from({ length: n }, (_, i) => (isEnchant(stored[3 - i]) ? stored[3 - i]! : null))
+      const rolled = s.randomOptions ?? []
+      slot.randomOptions = Array.from({ length: Math.max(randomRows(s.location, s.item), rolled.length) }, (_, i) => rolled[i] ?? null)
     }
     shareCode.value = b.shareCode
   }
@@ -178,6 +201,6 @@ export const useBuildStore = defineStore('build', () => {
   return {
     title, jobClass, baseLevel, jobLevel, gender, hairStyle, hairColor, clothColor, stats, slots, shareCode, saving, loadError,
     equipped, derived, shieldBlocked, enchantPools, enchantRule,
-    equip, setRefine, setCard, setEnchant, reset, save, load,
+    equip, setRefine, setCard, setEnchant, setRandomOption, reset, save, load,
   }
 })

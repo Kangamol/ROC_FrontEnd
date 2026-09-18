@@ -39,6 +39,18 @@ function openEnchant(i: number) {
 function onEnchant(e: ItemSummary | null) {
   store.setEnchant(props.def.key, enchantIndex.value, e)
 }
+
+// ---- range-based random options (Tengu B.Scroll …): one row = one option + the rolled value ----
+const randomRows = computed(() => enchantRule.value?.randomOptions ?? [])
+const rowDef = (row: number) => randomRows.value[row]?.options.find((o) => o.key === slot().randomOptions[row]?.key)
+function onRandomKey(row: number, key: string | null) {
+  const def = randomRows.value[row]?.options.find((o) => o.key === key)
+  store.setRandomOption(props.def.key, row, key, def ? def.max : 0)   // start at the max roll; the user types the real one
+}
+function onRandomValue(row: number, value: string | number) {
+  const cur = slot().randomOptions[row]
+  if (cur) store.setRandomOption(props.def.key, row, cur.key, Number(value))
+}
 </script>
 
 <template>
@@ -130,6 +142,24 @@ function onEnchant(e: ItemSummary | null) {
       </div>
     </div>
 
+    <!-- random options rolled on the item (Tengu B.Scroll): choose the option, type the value that was rolled -->
+    <div v-if="slot().item && randomRows.length" class="mt-1">
+      <div v-for="(row, i) in randomRows" :key="'ro' + i" class="d-flex align-center random-row" style="gap: 6px">
+        <v-icon icon="mdi-dice-multiple-outline" size="12" color="grey" :title="row.label" />
+        <v-select
+          :model-value="slot().randomOptions[i]?.key ?? null"
+          :items="[{ title: `— ${row.label}: ไม่มี —`, value: null }, ...row.options.map((o) => ({ title: `${o.label} (${o.min}–${o.max}${o.unit})`, value: o.key }))]"
+          density="compact" hide-details variant="plain" class="random-select flex-grow-1" @update:model-value="onRandomKey(i, $event)"
+        />
+        <v-text-field
+          v-if="slot().randomOptions[i]"
+          :model-value="slot().randomOptions[i]!.value" type="number" :min="rowDef(i)?.min" :max="rowDef(i)?.max"
+          :suffix="rowDef(i)?.unit" density="compact" hide-details variant="outlined" class="random-value"
+          @update:model-value="onRandomValue(i, $event)"
+        />
+      </div>
+    </div>
+
     <ItemPickerDialog v-model="pickerOpen" :title="def.label" :filter="def.filter" @select="store.equip(def.key, $event)" />
     <ItemPickerDialog
       v-if="def.npcEnchant"
@@ -156,5 +186,9 @@ function onEnchant(e: ItemSummary | null) {
 .ro-card-chip.enchant { border-style: dashed; border-color: #7c3aed; }
 .ro-card-chip.enchant.filled { border-style: solid; background: rgba(124, 58, 237, 0.08); }
 .ro-card-chip.enchant.locked { cursor: not-allowed; opacity: 0.5; border-color: #9ca3af; }
+.random-row :deep(.v-field__input) { font-size: 0.75rem; padding-top: 0; padding-bottom: 0; min-height: 24px; }
+.random-select { min-width: 0; }
+.random-value { flex: 0 0 92px; }
+.random-value :deep(input) { text-align: right; }
 .slot-hit:hover { background: rgba(37, 99, 235, 0.06); }
 </style>

@@ -17,7 +17,17 @@ export interface EnchantSlotRule {
   /** …and with one of these enchant IDs (Zodiac: slot 4 must be at Lv.4 before slot 3 opens) */
   requiresPreviousIn?: number[]
 }
-export interface EnchantRule { name: string; source?: string; note?: string; verified?: boolean; slots: EnchantSlotRule[] }
+/** One choosable random option: the user types the rolled value within [min, max]; `key` is a bonus key. */
+export interface RandomOptionDef { key: string; label: string; min: number; max: number; unit: '' | '%' }
+/** A row of random options (Tengu B.Scroll row 1 / row 2 …) — one option per row */
+export interface RandomOptionRow { label: string; options: RandomOptionDef[] }
+export interface RolledOption { key: string; value: number }
+export interface EnchantRule {
+  name: string; source?: string; note?: string; verified?: boolean
+  slots: EnchantSlotRule[]
+  /** range-based random options rolled on the item itself (in addition to / instead of enchant slots) */
+  randomOptions?: RandomOptionRow[]
+}
 export interface EnchantPools { default: EnchantRule | null; items: Record<string, EnchantRule> }
 
 /** Slot keys whose items can visit the enchant NPCs. */
@@ -25,10 +35,16 @@ export const NPC_ENCHANT_SLOTS = new Set(['HEAD_TOP', 'ARMOR', 'GARMENT', 'SHOES
 
 export const isEnchant = (item: ItemSummary | null | undefined) => !!item && item.subType === 'ENCHANT'
 
-/** The rule that applies to an item: its own entry, else the generic Hidden Enchant. */
-export function ruleFor(item: ItemSummary, pools: EnchantPools | null): EnchantRule | null {
+/** The rule that applies to an item: its own entry, else (when allowed for the slot) the generic Hidden Enchant. */
+export function ruleFor(item: ItemSummary, pools: EnchantPools | null, allowDefault = true): EnchantRule | null {
   if (!pools) return null
-  return pools.items[String(item.id)] ?? pools.default
+  return pools.items[String(item.id)] ?? (allowDefault ? pools.default : null)
+}
+
+/** Clamp a typed value into the option's range (integers unless the range itself is fractional). */
+export function clampOption(def: RandomOptionDef, value: number): number {
+  const v = Math.min(def.max, Math.max(def.min, value))
+  return Number.isInteger(def.min) && Number.isInteger(def.max) ? Math.round(v) : v
 }
 
 /** Number of enchant positions an item can ever have (never overlapping its real card slots). */

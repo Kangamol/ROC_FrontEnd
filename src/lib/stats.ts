@@ -19,6 +19,8 @@ export interface EquippedSlot {
   cards: (ItemSummary | null)[]
   /** NPC enchants (card positions 4, 3, 2) — counted exactly like cards */
   enchants?: (ItemSummary | null)[]
+  /** rolled range options on the item (Tengu B.Scroll …) — flat bonuses in bonus-key vocabulary */
+  randomOptions?: { key: string; value: number }[]
 }
 
 export interface Character {
@@ -231,6 +233,7 @@ export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: 
     for (const [k, v] of Object.entries(b)) out[k] = MAX_NOT_SUM.has(k) ? Math.max(out[k] ?? 0, v) : (out[k] ?? 0) + v
   }
   for (const { item, refine } of wornList(slots)) merge(itemBonusesAt(item, refine, ctx)) // cards scale with the host item's refine
+  for (const s of slots) if (s.item) for (const r of s.randomOptions ?? []) merge({ [r.key]: r.value })
   for (const set of activeSetBonuses(slots, base)) merge(set.bonuses)
   // DEF / MDEF cannot be ignored more than fully: High Wizard Card (100%) + Magician's Gloves (50%) is still 100%
   for (const k of Object.keys(out)) if (k.startsWith('ignoreDef:') || k.startsWith('ignoreMdef:')) out[k] = Math.min(out[k], 100)

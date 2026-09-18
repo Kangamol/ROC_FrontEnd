@@ -99,6 +99,8 @@ export interface BuildSlotPayload {
   card2Id: number | null
   card3Id: number | null
   card4Id: number | null
+  /** rolled range options (Tengu B.Scroll …) as { key, value } */
+  randomOptions?: { key: string; value: number }[]
 }
 
 export interface BuildPayload {

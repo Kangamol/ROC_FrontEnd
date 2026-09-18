@@ -15,8 +15,9 @@ export interface SlotDef {
   enchantSlots?: number
   /** Refine allowed (weapons/armor only). */
   refinable: boolean
-  /** Items in this slot can be enchanted at the NPC (rules in data/enchant_pools.json). */
-  npcEnchant?: boolean
+  /** Items in this slot can be enchanted at the NPC (rules in data/enchant_pools.json).
+   *  'default' also offers the generic Hidden Enchant to items not in the table; 'table' only listed items. */
+  npcEnchant?: 'default' | 'table'
 }
 
 const costumeStone = (loc: string): Pick<SlotDef, 'cardLocations' | 'cardFilter' | 'enchantSlots'> => ({
@@ -26,16 +27,16 @@ const costumeStone = (loc: string): Pick<SlotDef, 'cardLocations' | 'cardFilter'
 })
 
 export const SLOTS: SlotDef[] = [
-  { key: 'HEAD_TOP', label: 'Upper Head', icon: 'mdi-hat-fedora', group: 'gear', filter: { location: 'HEAD_TOP', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true, npcEnchant: true },
-  { key: 'HEAD_MID', label: 'Middle Head', icon: 'mdi-glasses', group: 'gear', filter: { location: 'HEAD_MID', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
-  { key: 'HEAD_LOW', label: 'Lower Head', icon: 'mdi-emoticon-outline', group: 'gear', filter: { location: 'HEAD_LOW', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true },
-  { key: 'ARMOR', label: 'Armor', icon: 'mdi-tshirt-crew', group: 'gear', filter: { location: 'ARMOR', type: 'ARMOR' }, cardLocations: ['ARMOR'], refinable: true, npcEnchant: true },
-  { key: 'WEAPON', label: 'Weapon', icon: 'mdi-sword', group: 'gear', filter: { location: 'WEAPON', type: 'WEAPON' }, cardLocations: ['WEAPON'], refinable: true },
-  { key: 'SHIELD', label: 'Shield', icon: 'mdi-shield', group: 'gear', filter: { location: 'SHIELD', type: 'ARMOR' }, cardLocations: ['SHIELD'], refinable: true },
-  { key: 'GARMENT', label: 'Garment', icon: 'mdi-weather-windy', group: 'gear', filter: { location: 'GARMENT', type: 'ARMOR' }, cardLocations: ['GARMENT'], refinable: true, npcEnchant: true },
-  { key: 'SHOES', label: 'Footgear', icon: 'mdi-shoe-sneaker', group: 'gear', filter: { location: 'SHOES', type: 'ARMOR' }, cardLocations: ['SHOES'], refinable: true, npcEnchant: true },
-  { key: 'ACCESSORY_1', label: 'Accessory 1', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_1', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_R'], refinable: true },
-  { key: 'ACCESSORY_2', label: 'Accessory 2', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_2', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_L'], refinable: true },
+  { key: 'HEAD_TOP', label: 'Upper Head', icon: 'mdi-hat-fedora', group: 'gear', filter: { location: 'HEAD_TOP', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true, npcEnchant: 'default' },
+  { key: 'HEAD_MID', label: 'Middle Head', icon: 'mdi-glasses', group: 'gear', filter: { location: 'HEAD_MID', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true, npcEnchant: 'table' },
+  { key: 'HEAD_LOW', label: 'Lower Head', icon: 'mdi-emoticon-outline', group: 'gear', filter: { location: 'HEAD_LOW', type: 'ARMOR' }, cardLocations: ['HEADGEAR'], refinable: true, npcEnchant: 'table' },
+  { key: 'ARMOR', label: 'Armor', icon: 'mdi-tshirt-crew', group: 'gear', filter: { location: 'ARMOR', type: 'ARMOR' }, cardLocations: ['ARMOR'], refinable: true, npcEnchant: 'default' },
+  { key: 'WEAPON', label: 'Weapon', icon: 'mdi-sword', group: 'gear', filter: { location: 'WEAPON', type: 'WEAPON' }, cardLocations: ['WEAPON'], refinable: true, npcEnchant: 'table' },
+  { key: 'SHIELD', label: 'Shield', icon: 'mdi-shield', group: 'gear', filter: { location: 'SHIELD', type: 'ARMOR' }, cardLocations: ['SHIELD'], refinable: true, npcEnchant: 'table' },
+  { key: 'GARMENT', label: 'Garment', icon: 'mdi-weather-windy', group: 'gear', filter: { location: 'GARMENT', type: 'ARMOR' }, cardLocations: ['GARMENT'], refinable: true, npcEnchant: 'default' },
+  { key: 'SHOES', label: 'Footgear', icon: 'mdi-shoe-sneaker', group: 'gear', filter: { location: 'SHOES', type: 'ARMOR' }, cardLocations: ['SHOES'], refinable: true, npcEnchant: 'default' },
+  { key: 'ACCESSORY_1', label: 'Accessory 1', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_1', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_R'], refinable: true, npcEnchant: 'table' },
+  { key: 'ACCESSORY_2', label: 'Accessory 2', icon: 'mdi-ring', group: 'gear', filter: { location: 'ACCESSORY_2', type: 'ARMOR' }, cardLocations: ['ACCESSORY', 'ACCESSORY_L'], refinable: true, npcEnchant: 'table' },
   { key: 'AMMO', label: 'Ammunition', icon: 'mdi-arrow-projectile', group: 'gear', filter: { location: 'AMMO', type: 'AMMO' }, cardLocations: [], refinable: false },
   { key: 'COSTUME_TOP', label: 'Costume Upper', icon: 'mdi-hat-fedora', group: 'costume', filter: { location: 'COSTUME_TOP', type: 'COSTUME' }, ...costumeStone('COSTUME_TOP'), refinable: false },
   { key: 'COSTUME_MID', label: 'Costume Middle', icon: 'mdi-glasses', group: 'costume', filter: { location: 'COSTUME_MID', type: 'COSTUME' }, ...costumeStone('COSTUME_MID'), refinable: false },
