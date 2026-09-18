@@ -6,7 +6,7 @@
  * ASPD and job-level stat bonuses come from the per-job tables served by
  * /api/jobs (rAthena pre-renewal); built-in approximations are the fallback.
  */
-import type { Bonuses, ItemSummary } from '@/api/client'
+import type { Bonuses, Gated, ItemSummary } from '@/api/client'
 import { TWO_HANDED } from './slots'
 
 export interface BaseStats { str: number; agi: number; vit: number; int: number; dex: number; luk: number }
@@ -119,21 +119,66 @@ const addAll = (out: Bonuses, b: Bonuses | undefined, times = 1) => {
   for (const [k, v] of Object.entries(b)) out[k] = (out[k] ?? 0) + v * times
 }
 
-/** Bonuses of one item at a given refine level (unconditional + refine-conditional + base-stat scaling). */
-export function itemBonusesAt(item: ItemSummary, refine: number, base?: BaseStats): Bonuses {
+/** "Variable Casting Stone(Middle)" and "Variable Casting Stone (Middle) [1]" should match. */
+const normName = (s: string) => s.replace(/\[\d+\]/g, '').replace(/[\s'\-.]/g, '').toLowerCase()
+
+/** Everything worn (items + cards) with the refine of the piece it sits on. */
+function wornList(slots: EquippedSlot[]): { item: ItemSummary; refine: number }[] {
+  const worn: { item: ItemSummary; refine: number }[] = []
+  for (const s of slots) {
+    if (s.item) worn.push({ item: s.item, refine: s.refine })
+    for (const c of s.cards) if (c) worn.push({ item: c, refine: s.refine })
+  }
+  return worn
+}
+
+function wornMatcher(slots: EquippedSlot[]): (name: string) => boolean {
+  const wornNames = wornList(slots).map((w) => normName(w.item.name))
+  return (req) => { const n = normName(req); return wornNames.some((w) => w === n || w.startsWith(n)) }
+}
+
+/** Character facts the conditional entries are evaluated against. */
+export interface BonusContext {
+  base?: BaseStats
+  baseLevel?: number
+  /** is an item / card of this name worn anywhere (for entries written inside a set block) */
+  isWorn?: (name: string) => boolean
+}
+
+const gateOk = (e: Gated, refine: number, ctx: BonusContext) =>
+  (e.refine == null || refine >= e.refine) && (e.requires == null || (ctx.isWorn != null && e.requires.every(ctx.isWorn)))
+
+/**
+ * Bonuses of one item at a given refine level: unconditional + everything whose condition holds
+ * (refine steps, base-stat thresholds / scaling, base-level thresholds / scaling). Set bonuses are
+ * handled separately by activeSetBonuses so identical set text on several pieces counts once.
+ */
+export function itemBonusesAt(item: ItemSummary, refine: number, ctx: BonusContext = {}): Bonuses {
   const out: Bonuses = { ...item.bonuses }
   const c = item.conditionalBonuses ?? {}
-  for (const r of c.refine ?? []) if (refine >= r.min) addAll(out, r.bonuses)
-  for (const r of c.perRefine ?? []) if (r.every > 0) addAll(out, r.bonuses, Math.floor(refine / r.every))
-  if (base) for (const r of c.perStat ?? []) {
-    const v = Math.min(base[r.stat], r.max ?? Infinity)
-    if (r.every > 0) addAll(out, r.bonuses, Math.floor(v / r.every))
+  const { base, baseLevel } = ctx
+  for (const r of c.refine ?? []) if (refine >= r.min && gateOk(r, refine, ctx)) addAll(out, r.bonuses)
+  for (const r of c.perRefine ?? []) if (r.every > 0 && gateOk(r, refine, ctx)) addAll(out, r.bonuses, Math.floor(refine / r.every))
+  if (base) {
+    for (const r of c.perStat ?? []) {
+      if (!gateOk(r, refine, ctx)) continue
+      const v = Math.min(base[r.stat], r.max ?? Infinity)
+      if (r.every > 0) addAll(out, r.bonuses, Math.floor(v / r.every))
+    }
+    for (const r of c.statMin ?? []) if (base[r.stat] >= r.min && gateOk(r, refine, ctx)) addAll(out, r.bonuses)
+  }
+  if (baseLevel != null) {
+    for (const r of c.level ?? []) {
+      if ((r.min != null && baseLevel < r.min) || (r.max != null && baseLevel > r.max)) continue
+      if (gateOk(r, refine, ctx)) addAll(out, r.bonuses)
+    }
+    for (const r of c.perLevel ?? []) {
+      if (r.every <= 0 || (r.min != null && baseLevel < r.min) || !gateOk(r, refine, ctx)) continue
+      addAll(out, r.bonuses, Math.floor(Math.min(baseLevel, r.max ?? Infinity) / r.every))
+    }
   }
   return out
 }
-
-/** "Variable Casting Stone(Middle)" and "Variable Casting Stone (Middle) [1]" should match. */
-const normName = (s: string) => s.replace(/\[\d+\]/g, '').replace(/[\s'\-.]/g, '').toLowerCase()
 
 /**
  * Set bonuses: an item's set entry applies when every required name is worn
@@ -141,15 +186,14 @@ const normName = (s: string) => s.replace(/\[\d+\]/g, '').replace(/[\s'\-.]/g, '
  * printed on every piece, so identical (members, bonuses) pairs count once.
  */
 export function activeSetBonuses(slots: EquippedSlot[]): { owner: ItemSummary; requires: string[]; bonuses: Bonuses }[] {
-  const worn: ItemSummary[] = []
-  for (const s of slots) { if (s.item) worn.push(s.item); for (const c of s.cards) if (c) worn.push(c) }
-  const wornNames = worn.map((i) => normName(i.name))
-  const isWorn = (req: string) => { const n = normName(req); return wornNames.some((w) => w === n || w.startsWith(n)) }
+  const worn = wornList(slots)
+  const isWorn = wornMatcher(slots)
   const seen = new Set<string>()
   const out: { owner: ItemSummary; requires: string[]; bonuses: Bonuses }[] = []
-  for (const item of worn) {
+  for (const { item, refine } of worn) {
     for (const set of item.conditionalBonuses?.set ?? []) {
       if (!set.requires.every(isWorn)) continue
+      if (set.refine != null && refine < set.refine) continue
       const members = [...new Set([...set.requires.map(normName), normName(item.name)])].sort().join('|')
       const key = `${members}::${JSON.stringify(set.bonuses)}`
       if (seen.has(key)) continue
@@ -160,18 +204,16 @@ export function activeSetBonuses(slots: EquippedSlot[]): { owner: ItemSummary; r
   return out
 }
 
-export function sumBonuses(slots: EquippedSlot[], base?: BaseStats): Bonuses {
+export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: number): Bonuses {
+  const ctx: BonusContext = { base, baseLevel, isWorn: wornMatcher(slots) }
   const out: Bonuses = {}
-  for (const s of slots) {
-    if (s.item) addAll(out, itemBonusesAt(s.item, s.refine, base))
-    for (const c of s.cards) if (c) addAll(out, itemBonusesAt(c, s.refine, base)) // cards scale with the host item's refine
-  }
+  for (const { item, refine } of wornList(slots)) addAll(out, itemBonusesAt(item, refine, ctx)) // cards scale with the host item's refine
   for (const set of activeSetBonuses(slots)) addAll(out, set.bonuses)
   return out
 }
 
 export function calculate(char: Character, slots: EquippedSlot[], job?: JobData): Derived {
-  const b = sumBonuses(slots, char.stats)
+  const b = sumBonuses(slots, char.stats, char.baseLevel)
   const all = b.allStats ?? 0
   const bonus: BaseStats = {
     str: (b.str ?? 0) + all, agi: (b.agi ?? 0) + all, vit: (b.vit ?? 0) + all,

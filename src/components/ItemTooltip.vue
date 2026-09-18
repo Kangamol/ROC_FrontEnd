@@ -65,7 +65,7 @@ watch(
       </div>
       <div v-if="hasMarks" class="ro-legend mt-2">
         <span class="counted"><v-icon icon="mdi-check" size="10" /> นำมาคำนวณ</span>
-        <span class="conditional"><v-icon icon="mdi-help-circle-outline" size="10" /> คำนวณเมื่อเข้าเงื่อนไข (ตีบวก / stat / เซ็ต)</span>
+        <span class="conditional"><v-icon icon="mdi-help-circle-outline" size="10" /> คำนวณเมื่อเข้าเงื่อนไข (ตีบวก / Base stat / Base Lv / การ์ด-เซ็ต)</span>
         <span class="skipped"><v-icon icon="mdi-close" size="10" /> ยังอ่านไม่ได้ ไม่ถูกนับ</span>
       </div>
     </template>

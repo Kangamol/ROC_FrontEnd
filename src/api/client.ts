@@ -6,11 +6,34 @@ export type ItemType =
 export type Bonuses = Record<string, number>
 
 /** Bonuses that depend on refine level, base stats, or other worn items. */
+export type StatKey = 'str' | 'agi' | 'vit' | 'int' | 'dex' | 'luk'
+
+/** Extra gate an entry may carry when it was written inside a refine / set block of the description:
+ *  it also needs the item at `refine` or more, and/or every name in `requires` worn. */
+export interface Gated {
+  refine?: number
+  requires?: string[]
+}
+
+/**
+ * "Base STR" / "Base Lv" in the client text always mean the character's own base value
+ * (what the player set on the status window / the character level), never the total after bonuses.
+ */
 export interface ConditionalBonuses {
-  refine?: { min: number; bonuses: Bonuses }[]
-  perRefine?: { every: number; bonuses: Bonuses }[]
-  perStat?: { stat: 'str' | 'agi' | 'vit' | 'int' | 'dex' | 'luk'; every: number; max: number | null; bonuses: Bonuses }[]
-  set?: { requires: string[]; bonuses: Bonuses }[]
+  /** once the item's refine >= min */
+  refine?: ({ min: number; bonuses: Bonuses } & Gated)[]
+  /** bonuses × floor(refine / every) */
+  perRefine?: ({ every: number; bonuses: Bonuses } & Gated)[]
+  /** bonuses × floor(min(baseStat, max) / every) */
+  perStat?: ({ stat: StatKey; every: number; max: number | null; bonuses: Bonuses } & Gated)[]
+  /** once baseStat >= min */
+  statMin?: ({ stat: StatKey; min: number; bonuses: Bonuses } & Gated)[]
+  /** while min <= baseLevel <= max (either side may be null) */
+  level?: ({ min: number | null; max: number | null; bonuses: Bonuses } & Gated)[]
+  /** bonuses × floor(min(baseLevel, max) / every), only once baseLevel >= min */
+  perLevel?: ({ every: number; min: number | null; max: number | null; bonuses: Bonuses } & Gated)[]
+  /** every named item / card must be worn */
+  set?: ({ requires: string[]; bonuses: Bonuses } & Gated)[]
 }
 
 export interface ItemSummary {
