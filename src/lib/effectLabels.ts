@@ -53,6 +53,8 @@ export function describeEffect(key: string, value: number): EffectLine {
   const simple = SIMPLE[key]
   if (simple) {
     const [label, unit, group, reduction] = simple
+    // a negative reduction is an increase: "ลดระยะเวลาร่าย… −100%" reads better as "เพิ่มระยะเวลาร่าย… 100%"
+    if (reduction && value < 0) return { value: `${fmt(-value)}${unit === 's' ? ' วินาที' : unit}`, label: label.replace(/^ลด/, 'เพิ่ม'), group }
     return { value: signed(value, unit === 's' ? ' วินาที' : unit, reduction), label, group }
   }
   const [type, a = '', b = ''] = key.split(':')

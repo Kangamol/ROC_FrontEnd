@@ -20,11 +20,13 @@ const rows = computed(() => [
 ])
 
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, ''))
+/** Reductions are stored positive: 20 → "-20%"; a negative sum (e.g. High Wizard Card +100% cast time) → "+80%". */
+const red = (n: number, unit: string) => (n === 0 ? `0${unit}` : n > 0 ? `-${fmt(n)}${unit}` : `+${fmt(-n)}${unit}`)
 /** Cast / delay reductions summed from worn items only (no skill-specific effects). */
 const castRows = computed(() => [
-  { label: 'Variable Cast (items)', value: `-${fmt(d.value.variableCastItems)}%`, hint: `DEX ให้อีก -${d.value.castTimeDex}%` },
-  { label: 'Fixed Cast (items)', value: [d.value.fixedCastSeconds ? `-${fmt(d.value.fixedCastSeconds)}s` : '', d.value.fixedCastPercent ? `-${fmt(d.value.fixedCastPercent)}%` : ''].filter(Boolean).join(' ') || '0' },
-  { label: 'After-cast Delay (items)', value: `-${fmt(d.value.afterCastDelayItems)}%` },
+  { label: 'Variable Cast (items)', value: red(d.value.variableCastItems, '%'), hint: `DEX ให้อีก -${d.value.castTimeDex}%` },
+  { label: 'Fixed Cast (items)', value: [d.value.fixedCastSeconds ? red(d.value.fixedCastSeconds, 's') : '', d.value.fixedCastPercent ? red(d.value.fixedCastPercent, '%') : ''].filter(Boolean).join(' ') || '0' },
+  { label: 'After-cast Delay (items)', value: red(d.value.afterCastDelayItems, '%') },
 ])
 
 </script>
