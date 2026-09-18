@@ -222,7 +222,7 @@ export const useBuildStore = defineStore('build', () => {
 
   return {
     title, jobClass, baseLevel, jobLevel, gender, hairStyle, hairColor, clothColor, stats, slots, shareCode, saving, loadError,
-    equipped, derived, shieldBlocked, enchantPools, enchantRule, caps, statPoints,
+    equipped, derived, shieldBlocked, enchantPools, enchantRule, caps, statPoints, jobData,
     equip, setRefine, setCard, setEnchant, setRandomOption, reset, save, load,
   }
 })

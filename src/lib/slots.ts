@@ -60,6 +60,8 @@ export const JOB_CLASSES = [
   'Merchant', 'Blacksmith', 'Alchemist', 'Whitesmith', 'Creator',
   'Thief', 'Assassin', 'Rogue', 'Assassin Cross', 'Stalker',
   'Taekwon', 'Star Gladiator', 'Soul Linker', 'Ninja', 'Gunslinger', 'Super Novice',
+  // 2nd Extended (Gnjoy): Lv 120 / Job 60, stats to 120 from Lv 100
+  'Kagerou', 'Oboro', 'Rebellion',
   // Gnjoy Awakened classes (Lv 120 / Job 75, stats to 130 from Lv 100)
   'Awakened Lord Knight', 'Awakened Paladin', 'Awakened High Wizard', 'Awakened Professor',
   'Awakened Sniper', 'Awakened Clown', 'Awakened Gypsy', 'Awakened High Priest', 'Awakened Champion',

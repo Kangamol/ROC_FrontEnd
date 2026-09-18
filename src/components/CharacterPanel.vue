@@ -20,6 +20,7 @@ const store = useBuildStore()
       แต้มสเตตัสใช้ไป {{ store.statPoints.spent }} / มี {{ store.statPoints.available }}
       <span v-if="store.statPoints.over"> — เกินแต้มที่มี</span>
       <span v-if="store.caps.stat > 99" class="ml-1">· สเตตัสสูงสุด {{ store.caps.stat }}</span>
+      <span v-else-if="store.caps.baseLevel > 99" class="ml-1">· สเตตัสถึง 120 ได้เมื่อ Base Lv ≥ 100</span>
     </div>
 
     <div v-for="k in STAT_KEYS" :key="k" class="d-flex align-center mb-1" style="gap: 8px">

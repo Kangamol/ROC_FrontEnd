@@ -40,8 +40,9 @@ export interface JobData {
   /** base attack delay per weapon subType (NONE = bare hands); pre-renewal has no shield penalty */
   aspd: Record<string, number>
   bonusStats: { level: number; str?: number; agi?: number; vit?: number; int?: number; dex?: number; luk?: number }[]
-  /** Awakened classes (Gnjoy): derived from `baseClass` by the API */
+  /** Awakened / 2nd Extended classes (Gnjoy): derived from `baseClass` by the API */
   awakened?: boolean
+  extended?: boolean
   baseClass?: string
   /** first level whose HP/SP is extrapolated, not published */
   hpApproxFrom?: number
@@ -340,7 +341,7 @@ export function calculate(char: Character, slots: EquippedSlot[], job?: JobData)
     baseHp = job.hp[i]!
     baseSp = job.sp[Math.min(i, job.sp.length - 1)]!
   } else {
-    const [hpFactor, hpMul, spFactor] = JOB_GROWTH[char.jobClass] ?? JOB_GROWTH[char.jobClass.replace(/^Awakened /, '')] ?? JOB_GROWTH.Novice!
+    const [hpFactor, hpMul, spFactor] = JOB_GROWTH[char.jobClass] ?? JOB_GROWTH[job?.baseClass ?? char.jobClass.replace(/^Awakened /, '')] ?? JOB_GROWTH.Novice!
     baseHp = 35 + (lv * hpMul) / 100 + (hpFactor / 100) * ((lv * (lv + 1)) / 2) / 10
     baseSp = 10 + (lv * spFactor) / 100
   }
