@@ -2,7 +2,7 @@ import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { api, type BuildResponse, type ItemSummary } from '@/api/client'
 import { SLOTS, SLOT_MAP } from '@/lib/slots'
-import { calculate, isTwoHanded, type BaseStats, type EquippedSlot, type JobData } from '@/lib/stats'
+import { TRANSCENDENT, calculate, classCaps, isTwoHanded, statPointsSpent, type BaseStats, type EquippedSlot, type JobData } from '@/lib/stats'
 import { clampOption, enchantCapacity, enchantSlotsView, isEnchant, ruleFor, type EnchantPools, type RolledOption } from '@/lib/enchant'
 
 interface SlotState {
@@ -69,6 +69,28 @@ export const useBuildStore = defineStore('build', () => {
   const derived = computed(() =>
     calculate({ jobClass: jobClass.value, baseLevel: baseLevel.value, jobLevel: jobLevel.value, stats }, equipped.value, jobData.value[jobClass.value]),
   )
+
+  /** Level / stat limits of the chosen class (Awakened: 120 / 75, stats 130 once Base Lv ≥ 100). */
+  const caps = computed(() => classCaps(jobData.value[jobClass.value], baseLevel.value))
+  // keep level and stats inside the class limits when the class or the level changes
+  watch([caps, jobClass], () => {
+    if (baseLevel.value > caps.value.baseLevel) baseLevel.value = caps.value.baseLevel
+    if (jobLevel.value > caps.value.jobLevel) jobLevel.value = caps.value.jobLevel
+    for (const k of Object.keys(stats) as (keyof BaseStats)[]) if (stats[k] > caps.value.stat) stats[k] = caps.value.stat
+  })
+
+  /** Cumulative status-point tables from the API (Gnjoy page); null until loaded. */
+  const statPointTable = shallowRef<{ hiClass: number[]; normal: number[] } | null>(null)
+  api.awakened().then((a) => { statPointTable.value = a.statPoints }).catch(() => { /* indicator stays hidden */ })
+  /** Status points spent vs. available at this base level (Awakened classes use the normal 48-start column). */
+  const statPoints = computed(() => {
+    const t = statPointTable.value
+    if (!t) return null
+    const col = TRANSCENDENT.has(jobClass.value) ? t.hiClass : t.normal
+    const available = col[Math.min(Math.max(baseLevel.value, 1), col.length) - 1] ?? 0
+    const spent = (Object.keys(stats) as (keyof BaseStats)[]).reduce((sum, k) => sum + statPointsSpent(stats[k]), 0)
+    return { spent, available, over: spent > available }
+  })
 
   const shieldBlocked = computed(() => isTwoHanded(slots.WEAPON!.item))
 
@@ -200,7 +222,7 @@ export const useBuildStore = defineStore('build', () => {
 
   return {
     title, jobClass, baseLevel, jobLevel, gender, hairStyle, hairColor, clothColor, stats, slots, shareCode, saving, loadError,
-    equipped, derived, shieldBlocked, enchantPools, enchantRule,
+    equipped, derived, shieldBlocked, enchantPools, enchantRule, caps, statPoints,
     equip, setRefine, setCard, setEnchant, setRandomOption, reset, save, load,
   }
 })

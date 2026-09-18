@@ -23,7 +23,9 @@ const head = shallowRef<SpriteSet | null>(null)
 const gears = shallowRef<SpriteSet[]>([])
 const robe = shallowRef<SpriteSet | null>(null)
 
-const jobEntry = computed(() => manifest.value?.jobs.find((j) => j.name === store.jobClass))
+// Awakened classes have no sprite of their own in the client — draw the base class body
+const spriteJob = computed(() => store.jobClass.replace(/^Awakened /, ''))
+const jobEntry = computed(() => manifest.value?.jobs.find((j) => j.name === spriteJob.value))
 const gender = computed<Gender>(() => (store.gender === 'F' ? 'f' : 'm'))
 const genderAvailable = computed(() => !jobEntry.value || jobEntry.value.genders.includes(gender.value))
 

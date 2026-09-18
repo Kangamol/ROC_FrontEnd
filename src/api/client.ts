@@ -153,6 +153,9 @@ export const api = {
   build(shareCode: string) {
     return request<BuildResponse>(`/api/builds/${shareCode}`)
   },
+  awakened() {
+    return request<{ caps: { baseLevel: number; jobLevel: number; stat: number; statFrom: number; statBelow: number; aspd: number } | null; statPoints: { hiClass: number[]; normal: number[] } | null }>('/api/awakened')
+  },
   enchantPools() {
     return request<import('@/lib/enchant').EnchantPools>('/api/enchant-pools')
   },

@@ -40,7 +40,36 @@ export interface JobData {
   /** base attack delay per weapon subType (NONE = bare hands); pre-renewal has no shield penalty */
   aspd: Record<string, number>
   bonusStats: { level: number; str?: number; agi?: number; vit?: number; int?: number; dex?: number; luk?: number }[]
+  /** Awakened classes (Gnjoy): derived from `baseClass` by the API */
+  awakened?: boolean
+  baseClass?: string
+  /** first level whose HP/SP is extrapolated, not published */
+  hpApproxFrom?: number
+  aspdApprox?: boolean
+  caps?: { baseLevel: number; jobLevel: number; stat: number; statFrom: number; statBelow: number; aspd: number }
 }
+
+/** Level / stat limits for a class: Awakened classes carry their own caps, everyone else is 99 / 70 / 99. */
+export function classCaps(job?: JobData, baseLevel = 1) {
+  const c = job?.caps
+  return {
+    baseLevel: c?.baseLevel ?? 99,
+    jobLevel: c?.jobLevel ?? 70,
+    stat: c ? (baseLevel >= c.statFrom ? c.stat : c.statBelow) : 99,
+    aspd: c?.aspd ?? 190,
+  }
+}
+
+/** Transcendent (High) classes start with 100 status points; every other class — Awakened included — with 48. */
+export const TRANSCENDENT = new Set([
+  'Lord Knight', 'Paladin', 'High Wizard', 'Professor', 'Sniper', 'Clown', 'Gypsy',
+  'High Priest', 'Champion', 'Whitesmith', 'Creator', 'Assassin Cross', 'Stalker',
+])
+
+/** Pre-renewal cost of raising one stat from v to v+1. */
+export const statPointCost = (v: number) => Math.floor((v - 1) / 10) + 2
+/** Points spent to bring a stat from 1 up to `v`. */
+export const statPointsSpent = (v: number) => { let t = 0; for (let i = 1; i < v; i++) t += statPointCost(i); return t }
 
 export interface Derived {
   total: BaseStats
@@ -302,7 +331,7 @@ export function calculate(char: Character, slots: EquippedSlot[], job?: JobData)
   let amotion = delay - (delay * (total.agi * 4 + total.dex)) / 1000
   amotion *= 1 - (b.aspdPercent ?? 0) / 100
   let aspd = 200 - amotion / 10 + (b.aspd ?? 0)
-  aspd = Math.min(190, Math.max(0, aspd))
+  aspd = Math.min(classCaps(job).aspd, Math.max(0, aspd))
 
   let baseHp: number, baseSp: number
   const usingJobTable = !!job?.hp?.length
@@ -311,7 +340,7 @@ export function calculate(char: Character, slots: EquippedSlot[], job?: JobData)
     baseHp = job.hp[i]!
     baseSp = job.sp[Math.min(i, job.sp.length - 1)]!
   } else {
-    const [hpFactor, hpMul, spFactor] = JOB_GROWTH[char.jobClass] ?? JOB_GROWTH.Novice!
+    const [hpFactor, hpMul, spFactor] = JOB_GROWTH[char.jobClass] ?? JOB_GROWTH[char.jobClass.replace(/^Awakened /, '')] ?? JOB_GROWTH.Novice!
     baseHp = 35 + (lv * hpMul) / 100 + (hpFactor / 100) * ((lv * (lv + 1)) / 2) / 10
     baseSp = 10 + (lv * spFactor) / 100
   }
