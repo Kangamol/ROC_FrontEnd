@@ -14,6 +14,8 @@ export interface EnchantSlotRule {
   options: number[] | null
   /** the previous slot has to be filled first (Zodiac hats) */
   requiresPrevious?: boolean
+  /** …and with one of these enchant IDs (Zodiac: slot 4 must be at Lv.4 before slot 3 opens) */
+  requiresPreviousIn?: number[]
 }
 export interface EnchantRule { name: string; source?: string; note?: string; verified?: boolean; slots: EnchantSlotRule[] }
 export interface EnchantPools { default: EnchantRule | null; items: Record<string, EnchantRule> }
@@ -48,13 +50,17 @@ export function enchantSlotsView(item: ItemSummary, refine: number, enchants: (I
   if (!rule) return []
   const n = enchantCapacity(item, rule)
   return rule.slots.slice(0, n).map((r, index) => {
-    const needPrev = !!r.requiresPrevious && index > 0 && !enchants[index - 1]
+    const prev = index > 0 ? enchants[index - 1] : null
+    const needPrev = (!!r.requiresPrevious || !!r.requiresPreviousIn) && index > 0 && !prev
+    const wrongPrev = !!r.requiresPreviousIn && !!prev && !r.requiresPreviousIn.includes(prev.id)
     const lowRefine = refine < r.minRefine
     return {
       ...r,
       index,
-      unlocked: !needPrev && !lowRefine,
-      lockReason: lowRefine ? `ต้องตี +${r.minRefine} ขึ้นไป` : needPrev ? 'ต้อง enchant ช่องก่อนหน้าก่อน' : '',
+      unlocked: !needPrev && !wrongPrev && !lowRefine,
+      lockReason: lowRefine ? `ต้องตี +${r.minRefine} ขึ้นไป`
+        : needPrev ? 'ต้อง enchant ช่องก่อนหน้าก่อน'
+        : wrongPrev ? 'ช่องก่อนหน้าต้องเป็นออปชันระดับสูงสุด (Lv.4) ก่อน' : '',
     }
   })
 }

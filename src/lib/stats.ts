@@ -122,7 +122,7 @@ const addAll = (out: Bonuses, b: Bonuses | undefined, times = 1) => {
 }
 
 /** "Variable Casting Stone(Middle)" and "Variable Casting Stone (Middle) [1]" should match. */
-const normName = (s: string) => s.replace(/\[\d+\]/g, '').replace(/[\s'\-.]/g, '').toLowerCase()
+const normName = (s: string) => s.replace(/\[NFS\]/gi, '').replace(/\[\d+\]/g, '').replace(/[\s'\-.]/g, '').toLowerCase()
 
 /** Everything worn (items + cards) with the refine of the piece it sits on. */
 function wornList(slots: EquippedSlot[]): { item: ItemSummary; refine: number }[] {
@@ -144,6 +144,7 @@ function wornMatcher(slots: EquippedSlot[]): (name: string) => boolean {
 export interface BonusContext {
   base?: BaseStats
   baseLevel?: number
+  jobLevel?: number
   /** is an item / card of this name worn anywhere (for entries written inside a set block) */
   isWorn?: (name: string) => boolean
 }
@@ -161,7 +162,7 @@ const gateOk = (e: Gated, refine: number, ctx: BonusContext) =>
 export function itemBonusesAt(item: ItemSummary, refine: number, ctx: BonusContext = {}): Bonuses {
   const out: Bonuses = { ...item.bonuses }
   const c = item.conditionalBonuses ?? {}
-  const { base, baseLevel } = ctx
+  const { base, baseLevel, jobLevel } = ctx
   for (const r of c.refine ?? []) if (refine >= r.min && gateOk(r, refine, ctx)) addAll(out, r.bonuses)
   for (const r of c.perRefine ?? []) if (r.every > 0 && gateOk(r, refine, ctx)) addAll(out, r.bonuses, Math.floor(refine / r.every))
   if (base) {
@@ -171,6 +172,9 @@ export function itemBonusesAt(item: ItemSummary, refine: number, ctx: BonusConte
       if (r.every > 0) addAll(out, r.bonuses, Math.floor(v / r.every))
     }
     for (const r of c.statMin ?? []) if (base[r.stat] >= r.min && gateOk(r, refine, ctx)) addAll(out, r.bonuses)
+  }
+  if (jobLevel != null) {
+    for (const r of c.perJobLevel ?? []) if (r.every > 0 && gateOk(r, refine, ctx)) addAll(out, r.bonuses, Math.floor(jobLevel / r.every))
   }
   if (baseLevel != null) {
     for (const r of c.level ?? []) {
@@ -220,8 +224,8 @@ export function skillLevelNotes(slots: EquippedSlot[]): { owner: ItemSummary; en
 /** Keys that do not add up: Gravity applies only the largest % fixed-cast reduction ("จะใช้งานค่าที่สูงที่สุด"). */
 const MAX_NOT_SUM = new Set(['fixedCastPercent'])
 
-export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: number): Bonuses {
-  const ctx: BonusContext = { base, baseLevel, isWorn: wornMatcher(slots) }
+export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: number, jobLevel?: number): Bonuses {
+  const ctx: BonusContext = { base, baseLevel, jobLevel, isWorn: wornMatcher(slots) }
   const out: Bonuses = {}
   const merge = (b: Bonuses) => {
     for (const [k, v] of Object.entries(b)) out[k] = MAX_NOT_SUM.has(k) ? Math.max(out[k] ?? 0, v) : (out[k] ?? 0) + v
@@ -234,7 +238,7 @@ export function sumBonuses(slots: EquippedSlot[], base?: BaseStats, baseLevel?: 
 }
 
 export function calculate(char: Character, slots: EquippedSlot[], job?: JobData): Derived {
-  const b = sumBonuses(slots, char.stats, char.baseLevel)
+  const b = sumBonuses(slots, char.stats, char.baseLevel, char.jobLevel)
   const all = b.allStats ?? 0
   const bonus: BaseStats = {
     str: (b.str ?? 0) + all, agi: (b.agi ?? 0) + all, vit: (b.vit ?? 0) + all,

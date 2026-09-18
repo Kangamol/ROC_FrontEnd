@@ -34,6 +34,8 @@ export interface ConditionalBonuses {
   level?: ({ min: number | null; max: number | null; bonuses: Bonuses } & Gated)[]
   /** bonuses × floor(min(baseLevel, max) / every), only once baseLevel >= min */
   perLevel?: ({ every: number; min: number | null; max: number | null; bonuses: Bonuses } & Gated)[]
+  /** bonuses × floor(jobLevel / every) */
+  perJobLevel?: ({ every: number; bonuses: Bonuses } & Gated)[]
   /** every named item / card must be worn */
   set?: ({ requires: string[]; bonuses: Bonuses } & Gated)[]
   /** scales with (every) or needs (min) a learned skill level — listed for information, never summed (no skill tree yet) */

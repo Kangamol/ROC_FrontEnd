@@ -38,7 +38,7 @@ const SLOT_OPTIONS = [
 const query = computed<ItemQuery>(() => {
   if (isEnchantMode.value) {
     // the whole option list is small (~260) — fetch once, filter to the pool here so the order matches the rule
-    return { type: 'CARD', subType: 'ENCHANT', search: search.value, limit: 300, offset: 0 }
+    return { type: 'CARD', subType: 'ENCHANT', search: search.value, limit: 500, offset: 0 }
   }
   if (isCardMode.value) {
     const q: ItemQuery = { ...(props.cardFilter ?? { type: 'CARD' }), search: search.value, limit: PAGE, offset: (page.value - 1) * PAGE }
