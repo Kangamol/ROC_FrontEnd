@@ -82,7 +82,7 @@ function onRandomValue(row: number, value: string | number) {
                       </div>
                     </template>
                     <template #default="{ isActive }">
-                      <div>
+                      <div class="ro-pop">
                         <ItemTooltip :item="card" />
                         <div class="ro-actions ro-actions-pop">
                           <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; openCard(i)">เปลี่ยน</v-btn>
@@ -109,7 +109,7 @@ function onRandomValue(row: number, value: string | number) {
                       </div>
                     </template>
                     <template #default="{ isActive }">
-                      <div>
+                      <div class="ro-pop">
                         <ItemTooltip :item="slot().enchants[v.index]!" />
                         <div class="ro-actions ro-actions-pop">
                           <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; openEnchant(v.index)">เปลี่ยน</v-btn>
@@ -136,7 +136,7 @@ function onRandomValue(row: number, value: string | number) {
           </div>
         </template>
         <template #default="{ isActive }">
-          <div>
+          <div class="ro-pop">
             <ItemTooltip :item="slot().item!" :refine="slot().refine" />
             <div class="ro-actions ro-actions-pop">
               <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; pickerOpen = true">เปลี่ยน</v-btn>
