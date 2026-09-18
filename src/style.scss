@@ -5,25 +5,75 @@ $sky: #e8f1fc;
 $line: #cfe0f5;
 $text-muted: #5b6b8c;
 
+// Fonts (index.html loads them from Google Fonts): Prompt for titles / section headers, Sarabun for everything else.
+$font-body: 'Sarabun', 'Segoe UI', sans-serif;
+$font-head: 'Prompt', $font-body;
+
 html, body {
-  background: #ffffff;
+  background: #f3f6fb;
+}
+.v-application {
+  font-family: $font-body !important;
+  color: #14213d;
+  .v-application__wrap { background: radial-gradient(1200px 600px at 10% -10%, #e5eefc 0%, #f3f6fb 55%, #f3f6fb 100%); }
+}
+// Vuetify's typography utilities pin Roboto — hand them the body font first, then re-pin headings to Prompt below
+.v-application [class^="text-"], .v-application [class*=" text-"], .v-application .v-list-item-title, .v-application .v-list-item-subtitle,
+.v-application .v-field, .v-application .v-label, .v-application .v-select__selection, .v-application .v-tooltip > .v-overlay__content {
+  font-family: $font-body !important;
+  letter-spacing: 0 !important;
+}
+// headings / section titles / dialog titles use Prompt
+h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
+.text-subtitle-1, .text-subtitle-2, .v-card-title, .v-app-bar-title, .ro-brand-title, .v-btn, .v-tab, .ro-section {
+  font-family: $font-head !important;
+  letter-spacing: 0 !important;
+}
+.text-subtitle-2 { font-weight: 600 !important; font-size: 0.95rem !important; }
+
+// ---- app bar ----
+.ro-appbar {
+  background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.25) !important;
+  .ro-brand { display: flex; align-items: center; gap: 12px; padding-left: 16px; }
+  .ro-brand-icon {
+    width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+  .ro-brand-title { font-weight: 700; font-size: 1.1rem; line-height: 1.15; }
+  .ro-brand-sub { font-family: $font-body; font-size: 0.72rem; opacity: 0.9; line-height: 1.1; }
+  .ro-brand-note { font-size: 0.75rem; opacity: 0.85; padding-right: 16px; }
 }
 
 .ro-panel {
-  border: 1px solid $line;
-  background: linear-gradient(180deg, #ffffff, #f7fafe);
-  box-shadow: 0 1px 3px rgba(30, 58, 138, 0.06);
+  border: 1px solid rgba(207, 224, 245, 0.9);
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(30, 58, 138, 0.07);
+  border-radius: 16px !important;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  &:hover { box-shadow: 0 8px 26px rgba(30, 58, 138, 0.11); }
 }
+// section header inside a panel / above a group
+.ro-section, .text-subtitle-2.text-accent {
+  display: flex; align-items: center; gap: 6px;
+  color: $navy;
+  &::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, $line, transparent); margin-left: 8px; }
+}
+// slot cards: clickable feel
+.slot-hit { cursor: pointer; border-radius: 10px; padding: 2px 4px; margin: -2px -4px; transition: background 0.12s; }
+.slot-hit:hover { background: rgba(37, 99, 235, 0.06); }
+.ro-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed $line; }
 
 .ro-icon-box {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background: $sky;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f1f6fd, #e3edfb);
   border: 1px solid $line;
   image-rendering: pixelated;
 
@@ -41,9 +91,9 @@ html, body {
 
 .ro-card-chip {
   border: 1px dashed #9db8dc;
-  border-radius: 4px;
-  min-width: 26px;
-  height: 26px;
+  border-radius: 8px;
+  min-width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,8 +109,8 @@ html, body {
   color: #14213d;
   border: 1px solid $line;
   box-shadow: 0 8px 24px rgba(30, 58, 138, 0.15);
-  border-radius: 6px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 14px;
   max-width: 360px;
   font-size: 0.82rem;
   line-height: 1.35;

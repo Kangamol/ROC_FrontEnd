@@ -3,13 +3,18 @@
 
 <template>
   <v-app>
-    <v-app-bar density="compact" flat class="ro-panel">
-      <v-app-bar-title class="text-accent font-weight-bold">
-        <v-icon icon="mdi-sword-cross" class="mr-2" />RO Classic Simulator
-      </v-app-bar-title>
-      <span class="text-caption text-medium-emphasis mr-4">Gnjoy Classic (TH) item data</span>
+    <v-app-bar density="comfortable" flat class="ro-appbar">
+      <div class="ro-brand">
+        <div class="ro-brand-icon"><v-icon icon="mdi-sword-cross" size="20" /></div>
+        <div>
+          <div class="ro-brand-title">ROC Simulator</div>
+          <div class="ro-brand-sub">By (SuperTon VIP:1269)</div>
+        </div>
+      </div>
+      <v-spacer />
+      <span class="ro-brand-note d-none d-sm-inline">Gnjoy Classic (TH) item data</span>
     </v-app-bar>
-    <v-main>
+    <v-main class="ro-main">
       <router-view />
     </v-main>
   </v-app>

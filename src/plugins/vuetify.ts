@@ -10,7 +10,7 @@ export const vuetify = createVuetify({
       ro: {
         dark: false,
         colors: {
-          background: '#ffffff',
+          background: '#f3f6fb',
           surface: '#ffffff',
           'surface-variant': '#eef4fb',
           'on-surface': '#14213d',
@@ -26,8 +26,9 @@ export const vuetify = createVuetify({
     },
   },
   defaults: {
-    VCard: { rounded: 'lg' },
-    VBtn: { rounded: 'md' },
+    VCard: { rounded: 'xl' },
+    VBtn: { rounded: 'lg', class: 'text-none' },
+    VDialog: { rounded: 'xl' },
     VTextField: { variant: 'outlined', density: 'compact', hideDetails: true },
     VSelect: { variant: 'outlined', density: 'compact', hideDetails: true },
   },

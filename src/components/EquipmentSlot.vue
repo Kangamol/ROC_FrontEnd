@@ -57,7 +57,8 @@ function onRandomValue(row: number, value: string | number) {
   <v-card class="ro-panel pa-2" :class="{ 'opacity-50': disabled }" variant="flat">
     <div class="d-flex align-center" style="gap: 10px">
       <!-- hover or click the item (icon + name) to see its full description -->
-      <v-menu v-if="slot().item" open-on-hover open-on-click :open-delay="250" location="end" :close-on-content-click="false" max-width="380">
+      <!-- click the item (icon + name) to open its details; the pencil / actions change it -->
+      <v-menu v-if="slot().item" location="end" :close-on-content-click="false" max-width="380">
         <template #activator="{ props: p }">
           <div v-bind="p" class="d-flex align-center flex-grow-1 overflow-hidden slot-hit" style="gap: 10px">
             <div class="ro-icon-box">
@@ -71,16 +72,24 @@ function onRandomValue(row: number, value: string | number) {
                 <span v-if="slot().item!.slotCount" class="text-medium-emphasis">[{{ slot().item!.slotCount }}]</span>
                 <v-icon icon="mdi-information-outline" size="12" color="grey" class="ml-1" />
               </div>
-              <div v-if="slot().cards.length" class="d-flex align-center mt-1" style="gap: 4px" @mouseenter.stop>
+              <div v-if="slot().cards.length" class="d-flex align-center mt-1" style="gap: 4px">
                 <template v-for="(card, i) in slot().cards" :key="i">
-                  <!-- card / enchant chip: hover = its description, click = change it -->
-                  <v-menu v-if="card" open-on-hover :open-delay="250" location="bottom" :close-on-content-click="false" max-width="380">
+                  <!-- card chip: click = details + change / remove -->
+                  <v-menu v-if="card" location="bottom" :close-on-content-click="false" max-width="380">
                     <template #activator="{ props: cp }">
-                      <div v-bind="cp" class="ro-card-chip" @click.stop="openCard(i)">
+                      <div v-bind="cp" class="ro-card-chip" :title="card.name" @click.stop>
                         <img :src="iconUrl(card.id)" alt="" />
                       </div>
                     </template>
-                    <ItemTooltip :item="card" />
+                    <template #default="{ isActive }">
+                      <div>
+                        <ItemTooltip :item="card" />
+                        <div class="ro-actions ro-actions-pop">
+                          <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; openCard(i)">เปลี่ยน</v-btn>
+                          <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-close" @click="isActive.value = false; store.setCard(def.key, i, null)">ถอด</v-btn>
+                        </div>
+                      </div>
+                    </template>
                   </v-menu>
                   <div v-else class="ro-card-chip" :title="def.enchantSlots ? 'ใส่ enchant stone' : 'ใส่การ์ด'" @click.stop="openCard(i)">
                     <v-icon :icon="def.enchantSlots ? 'mdi-diamond-stone' : 'mdi-cards-outline'" size="14" color="grey" />
@@ -89,18 +98,25 @@ function onRandomValue(row: number, value: string | number) {
                 <span v-if="def.enchantSlots && slot().cards[0]" class="text-caption text-medium-emphasis text-truncate">{{ slot().cards[0]!.name }}</span>
               </div>
               <!-- NPC enchant chips: one per position the rule allows; locked until the refine / order condition is met -->
-              <div v-if="enchantSlots.length" class="d-flex align-center mt-1 flex-wrap" style="gap: 4px" @mouseenter.stop>
+              <div v-if="enchantSlots.length" class="d-flex align-center mt-1 flex-wrap" style="gap: 4px">
                 <v-icon icon="mdi-auto-fix" size="12" color="grey" :title="enchantRule?.name" />
                 <template v-for="v in enchantSlots" :key="v.position">
-                  <v-menu v-if="slot().enchants[v.index]" open-on-hover :open-delay="250" location="bottom" :close-on-content-click="false" max-width="380">
+                  <v-menu v-if="slot().enchants[v.index]" location="bottom" :close-on-content-click="false" max-width="380">
                     <template #activator="{ props: ep }">
-                      <div v-bind="ep" class="ro-card-chip enchant filled" @click.stop="openEnchant(v.index)">
-                        <!-- enchant options have no icon in the client -->
+                      <div v-bind="ep" class="ro-card-chip enchant filled" :title="slot().enchants[v.index]!.name" @click.stop>
                         <img v-if="slot().enchants[v.index]!.hasIcon" :src="iconUrl(slot().enchants[v.index]!.id)" alt="" />
                         <v-icon v-else icon="mdi-auto-fix" size="12" color="#7c3aed" />
                       </div>
                     </template>
-                    <ItemTooltip :item="slot().enchants[v.index]!" />
+                    <template #default="{ isActive }">
+                      <div>
+                        <ItemTooltip :item="slot().enchants[v.index]!" />
+                        <div class="ro-actions ro-actions-pop">
+                          <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; openEnchant(v.index)">เปลี่ยน</v-btn>
+                          <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-close" @click="isActive.value = false; store.setEnchant(def.key, v.index, null)">ถอด</v-btn>
+                        </div>
+                      </div>
+                    </template>
                   </v-menu>
                   <div
                     v-else
@@ -119,7 +135,15 @@ function onRandomValue(row: number, value: string | number) {
             </div>
           </div>
         </template>
-        <ItemTooltip :item="slot().item!" :refine="slot().refine" />
+        <template #default="{ isActive }">
+          <div>
+            <ItemTooltip :item="slot().item!" :refine="slot().refine" />
+            <div class="ro-actions ro-actions-pop">
+              <v-btn size="small" color="primary" variant="flat" prepend-icon="mdi-swap-horizontal" @click="isActive.value = false; pickerOpen = true">เปลี่ยน</v-btn>
+              <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-close" @click="isActive.value = false; store.equip(def.key, null)">ถอด</v-btn>
+            </div>
+          </div>
+        </template>
       </v-menu>
 
       <template v-else>

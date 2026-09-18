@@ -125,7 +125,7 @@ function pick(item: ItemSummary | null) {
               <template v-if="it.cardLocation"> · {{ it.cardLocation }}</template>
             </v-list-item-subtitle>
             <template #append>
-              <v-icon icon="mdi-information-outline" size="small" color="grey" @click.stop="preview = it" @mouseenter="preview = it" />
+              <v-btn icon="mdi-information-outline" size="x-small" variant="text" color="primary" title="ดูรายละเอียด" @click.stop="preview = it" />
             </template>
           </v-list-item>
           <v-skeleton-loader v-if="loading && !items.length" type="list-item-avatar@6" class="bg-transparent" />
