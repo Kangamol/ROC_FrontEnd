@@ -17,6 +17,8 @@ export interface EquippedSlot {
   item: ItemSummary | null
   refine: number
   cards: (ItemSummary | null)[]
+  /** NPC enchants (card positions 4, 3, 2) — counted exactly like cards */
+  enchants?: (ItemSummary | null)[]
 }
 
 export interface Character {
@@ -128,6 +130,7 @@ function wornList(slots: EquippedSlot[]): { item: ItemSummary; refine: number }[
   for (const s of slots) {
     if (s.item) worn.push({ item: s.item, refine: s.refine })
     for (const c of s.cards) if (c) worn.push({ item: c, refine: s.refine })
+    for (const e of s.enchants ?? []) if (e) worn.push({ item: e, refine: s.refine })
   }
   return worn
 }

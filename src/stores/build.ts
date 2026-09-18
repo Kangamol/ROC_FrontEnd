@@ -1,19 +1,22 @@
-import { computed, reactive, ref, shallowRef } from 'vue'
+import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { api, type BuildResponse, type ItemSummary } from '@/api/client'
 import { SLOTS, SLOT_MAP } from '@/lib/slots'
 import { calculate, isTwoHanded, type BaseStats, type EquippedSlot, type JobData } from '@/lib/stats'
+import { enchantCapacity, enchantSlotsView, isEnchant, ruleFor, type EnchantPools } from '@/lib/enchant'
 
 interface SlotState {
   item: ItemSummary | null
   refine: number
   cards: (ItemSummary | null)[]
+  /** NPC enchants by position order 4, 3, 2 (see lib/enchant.ts) */
+  enchants: (ItemSummary | null)[]
 }
 
 /** Classic server caps refining at +15 */
 export const MAX_REFINE = 15
 
-const emptySlot = (): SlotState => ({ item: null, refine: 0, cards: [] })
+const emptySlot = (): SlotState => ({ item: null, refine: 0, cards: [], enchants: [] })
 
 export const useBuildStore = defineStore('build', () => {
   const title = ref('My Build')
@@ -31,8 +34,23 @@ export const useBuildStore = defineStore('build', () => {
   const loadError = ref<string | null>(null)
 
   const equipped = computed<EquippedSlot[]>(() =>
-    SLOTS.map((s) => ({ key: s.key, item: slots[s.key]!.item, refine: slots[s.key]!.refine, cards: slots[s.key]!.cards })),
+    SLOTS.map((s) => ({ key: s.key, item: slots[s.key]!.item, refine: slots[s.key]!.refine, cards: slots[s.key]!.cards, enchants: slots[s.key]!.enchants })),
   )
+
+  /** NPC enchant rules from the API (data/enchant_pools.json); no enchanting until loaded. */
+  const enchantPools = shallowRef<EnchantPools | null>(null)
+  api.enchantPools().then((p) => { enchantPools.value = p }).catch(() => { /* enchant UI stays hidden */ })
+
+  const enchantRule = (slotKey: string, item: ItemSummary) => (SLOT_MAP[slotKey]?.npcEnchant ? ruleFor(item, enchantPools.value) : null)
+  // items equipped before the rules arrived (shared link) get their enchant slots once they do
+  watch(enchantPools, () => {
+    for (const s of SLOTS) {
+      const slot = slots[s.key]!
+      if (!slot.item) continue
+      const n = enchantCapacity(slot.item, enchantRule(s.key, slot.item))
+      slot.enchants = Array.from({ length: n }, (_, i) => slot.enchants[i] ?? null)
+    }
+  })
 
   /** Job tables from the API (base HP/SP, ASPD, job-level stats); engine falls back to approximations until loaded. */
   const jobData = shallowRef<Record<string, JobData>>({})
@@ -53,6 +71,7 @@ export const useBuildStore = defineStore('build', () => {
     slot.item = item
     slot.refine = 0
     slot.cards = item ? Array.from({ length: capacity(slotKey, item) }, () => null) : []
+    slot.enchants = item ? Array.from({ length: enchantCapacity(item, enchantRule(slotKey, item)) }, () => null) : []
     shareCode.value = null
     // two-handed weapons kick the shield out
     if (slotKey === 'WEAPON' && isTwoHanded(item)) Object.assign(slots.SHIELD!, emptySlot())
@@ -62,6 +81,17 @@ export const useBuildStore = defineStore('build', () => {
     const slot = slots[slotKey]
     if (!slot?.item || !SLOT_MAP[slotKey]?.refinable) return
     slot.refine = Math.max(0, Math.min(MAX_REFINE, refine))
+    // an enchant slot that needs a higher refine loses its enchant when the item is refined down
+    for (const v of enchantSlotsView(slot.item, slot.refine, slot.enchants, enchantRule(slotKey, slot.item))) {
+      if (slot.refine < v.minRefine) slot.enchants[v.index] = null
+    }
+    shareCode.value = null
+  }
+
+  function setEnchant(slotKey: string, index: number, enchant: ItemSummary | null) {
+    const slot = slots[slotKey]
+    if (!slot?.item || index >= slot.enchants.length) return
+    slot.enchants[index] = enchant
     shareCode.value = null
   }
 
@@ -97,10 +127,11 @@ export const useBuildStore = defineStore('build', () => {
             location: s.key,
             refineLevel: st.refine,
             itemId: st.item!.id,
+            // enchants live in the last card positions (4, 3, 2), the same way the game stores them
             card1Id: st.cards[0]?.id ?? null,
-            card2Id: st.cards[1]?.id ?? null,
-            card3Id: st.cards[2]?.id ?? null,
-            card4Id: st.cards[3]?.id ?? null,
+            card2Id: st.cards[1]?.id ?? st.enchants[2]?.id ?? null,
+            card3Id: st.cards[2]?.id ?? st.enchants[1]?.id ?? null,
+            card4Id: st.cards[3]?.id ?? st.enchants[0]?.id ?? null,
           }
         }),
       })
@@ -127,7 +158,10 @@ export const useBuildStore = defineStore('build', () => {
       if (!slot || !s.item) continue
       slot.item = s.item
       slot.refine = s.refineLevel
-      slot.cards = Array.from({ length: capacity(s.location, s.item) }, (_, i) => [s.card1, s.card2, s.card3, s.card4][i] ?? null)
+      const stored = [s.card1, s.card2, s.card3, s.card4]
+      slot.cards = Array.from({ length: capacity(s.location, s.item) }, (_, i) => (isEnchant(stored[i]) ? null : stored[i]) ?? null)
+      const n = enchantCapacity(s.item, enchantRule(s.location, s.item))
+      slot.enchants = Array.from({ length: n }, (_, i) => (isEnchant(stored[3 - i]) ? stored[3 - i]! : null))
     }
     shareCode.value = b.shareCode
   }
@@ -143,7 +177,7 @@ export const useBuildStore = defineStore('build', () => {
 
   return {
     title, jobClass, baseLevel, jobLevel, gender, hairStyle, hairColor, clothColor, stats, slots, shareCode, saving, loadError,
-    equipped, derived, shieldBlocked,
-    equip, setRefine, setCard, reset, save, load,
+    equipped, derived, shieldBlocked, enchantPools, enchantRule,
+    equip, setRefine, setCard, setEnchant, reset, save, load,
   }
 })

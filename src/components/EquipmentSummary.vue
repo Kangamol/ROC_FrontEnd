@@ -36,7 +36,7 @@ const skillNotes = computed(() =>
 const unparsed = computed(() => {
   const out: { name: string; lines: string[] }[] = []
   for (const s of store.equipped) {
-    for (const it of [s.item, ...s.cards]) {
+    for (const it of [s.item, ...s.cards, ...(s.enchants ?? [])]) {
       if (it?.unparsedLines?.length) out.push({ name: it.name, lines: it.unparsedLines })
     }
   }

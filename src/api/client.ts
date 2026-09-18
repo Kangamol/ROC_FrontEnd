@@ -149,6 +149,9 @@ export const api = {
   build(shareCode: string) {
     return request<BuildResponse>(`/api/builds/${shareCode}`)
   },
+  enchantPools() {
+    return request<import('@/lib/enchant').EnchantPools>('/api/enchant-pools')
+  },
   jobs() {
     return request<Record<string, import('@/lib/stats').JobData>>('/api/jobs')
   },

@@ -10,6 +10,8 @@ const props = defineProps<{
   cardLocations?: string[]
   /** Card mode base query — defaults to `{ type: 'CARD' }`; costume slots use enchant stones instead */
   cardFilter?: ItemQuery
+  /** NPC-enchant mode: only these enchant item IDs are offered (null = every enchant option) */
+  enchantPool?: number[] | null
 }>()
 const model = defineModel<boolean>({ default: false })
 const emit = defineEmits<{ select: [item: ItemSummary | null] }>()
@@ -26,12 +28,18 @@ const PAGE = 40
 const preview = ref<ItemSummary | null>(null)
 
 const isCardMode = computed(() => !!props.cardLocations)
+const isEnchantMode = computed(() => props.enchantPool !== undefined)
+const poolSet = computed(() => (props.enchantPool ? new Set(props.enchantPool) : null))
 const SLOT_OPTIONS = [
   { title: 'ทุก slot', value: 0 }, { title: '1+ slot', value: 1 }, { title: '2+ slot', value: 2 },
   { title: '3+ slot', value: 3 }, { title: '4 slot', value: 4 },
 ]
 
 const query = computed<ItemQuery>(() => {
+  if (isEnchantMode.value) {
+    // the whole option list is small (~260) — fetch once, filter to the pool here so the order matches the rule
+    return { type: 'CARD', subType: 'ENCHANT', search: search.value, limit: 300, offset: 0 }
+  }
   if (isCardMode.value) {
     const q: ItemQuery = { ...(props.cardFilter ?? { type: 'CARD' }), search: search.value, limit: PAGE, offset: (page.value - 1) * PAGE }
     // one cardLocation at a time on the API; when a slot accepts several (accessories)
@@ -43,6 +51,11 @@ const query = computed<ItemQuery>(() => {
 })
 
 const visible = computed(() => {
+  if (isEnchantMode.value) {
+    if (allCards.value || !poolSet.value) return items.value
+    const order = new Map(props.enchantPool!.map((id, i) => [id, i]))
+    return items.value.filter((i) => poolSet.value!.has(i.id)).sort((a, b) => order.get(a.id)! - order.get(b.id)!)
+  }
   if (!isCardMode.value || allCards.value || props.cardLocations!.length === 1) return items.value
   return items.value.filter((i) => i.cardLocation && props.cardLocations!.includes(i.cardLocation))
 })
@@ -86,9 +99,10 @@ function pick(item: ItemSummary | null) {
       <v-card-text class="pt-0">
         <div class="d-flex align-center flex-wrap" style="gap: 8px">
           <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="ค้นหาชื่อ / ID" clearable style="min-width: 220px" />
-          <v-select v-if="!isCardMode" v-model="minSlots" :items="SLOT_OPTIONS" style="max-width: 130px" />
-          <v-switch v-else v-model="allCards" :label="cardFilter ? 'แสดง stone ทุกตำแหน่ง' : 'แสดงการ์ดทั้งหมด'" color="accent" density="compact" hide-details />
-          <span class="text-caption text-medium-emphasis">{{ total }} รายการ</span>
+          <v-select v-if="!isCardMode && !isEnchantMode" v-model="minSlots" :items="SLOT_OPTIONS" style="max-width: 130px" />
+          <v-switch v-else-if="isEnchantMode && poolSet" v-model="allCards" label="แสดง enchant ทั้งหมด (นอกชุดของ NPC นี้)" color="accent" density="compact" hide-details />
+          <v-switch v-else-if="isCardMode" v-model="allCards" :label="cardFilter ? 'แสดง stone ทุกตำแหน่ง' : 'แสดงการ์ดทั้งหมด'" color="accent" density="compact" hide-details />
+          <span class="text-caption text-medium-emphasis">{{ isEnchantMode ? visible.length : total }} รายการ</span>
         </div>
         <div class="d-flex mt-2" style="gap: 12px">
         <v-list density="compact" class="bg-transparent flex-grow-1" style="min-height: 300px">
@@ -121,7 +135,7 @@ function pick(item: ItemSummary | null) {
           <ItemTooltip :item="preview" />
         </div>
         </div>
-        <div v-if="total > PAGE" class="d-flex align-center justify-center mt-2" style="gap: 12px">
+        <div v-if="!isEnchantMode && total > PAGE" class="d-flex align-center justify-center mt-2" style="gap: 12px">
           <v-btn icon="mdi-chevron-left" size="small" variant="tonal" :disabled="page <= 1" @click="page--" />
           <span class="text-caption">หน้า {{ page }} / {{ Math.ceil(total / PAGE) }}</span>
           <v-btn icon="mdi-chevron-right" size="small" variant="tonal" :disabled="page >= Math.ceil(total / PAGE)" @click="page++" />

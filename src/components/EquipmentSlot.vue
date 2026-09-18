@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { computed } from 'vue'
 import { iconUrl, type ItemSummary } from '@/api/client'
 import type { SlotDef } from '@/lib/slots'
+import { enchantSlotsView } from '@/lib/enchant'
 import { useBuildStore } from '@/stores/build'
 import ItemPickerDialog from './ItemPickerDialog.vue'
 import ItemTooltip from './ItemTooltip.vue'
@@ -21,6 +23,21 @@ function openCard(i: number) {
 }
 function onCard(card: ItemSummary | null) {
   store.setCard(props.def.key, cardIndex.value, card)
+}
+
+// ---- NPC enchant (positions 4, 3, 2 — see lib/enchant.ts) ----
+const enchantPickerOpen = ref(false)
+const enchantIndex = ref(0)
+const enchantRule = computed(() => (props.def.npcEnchant && slot().item ? store.enchantRule(props.def.key, slot().item!) : null))
+const enchantSlots = computed(() => (slot().item && enchantRule.value ? enchantSlotsView(slot().item!, slot().refine, slot().enchants, enchantRule.value) : []))
+const enchantPool = computed(() => enchantSlots.value[enchantIndex.value]?.options ?? null)
+function openEnchant(i: number) {
+  if (!enchantSlots.value[i]?.unlocked) return
+  enchantIndex.value = i
+  enchantPickerOpen.value = true
+}
+function onEnchant(e: ItemSummary | null) {
+  store.setEnchant(props.def.key, enchantIndex.value, e)
 }
 </script>
 
@@ -59,6 +76,34 @@ function onCard(card: ItemSummary | null) {
                 </template>
                 <span v-if="def.enchantSlots && slot().cards[0]" class="text-caption text-medium-emphasis text-truncate">{{ slot().cards[0]!.name }}</span>
               </div>
+              <!-- NPC enchant chips: one per position the rule allows; locked until the refine / order condition is met -->
+              <div v-if="enchantSlots.length" class="d-flex align-center mt-1 flex-wrap" style="gap: 4px" @mouseenter.stop>
+                <v-icon icon="mdi-auto-fix" size="12" color="grey" :title="enchantRule?.name" />
+                <template v-for="v in enchantSlots" :key="v.position">
+                  <v-menu v-if="slot().enchants[v.index]" open-on-hover :open-delay="250" location="bottom" :close-on-content-click="false" max-width="380">
+                    <template #activator="{ props: ep }">
+                      <div v-bind="ep" class="ro-card-chip enchant filled" @click.stop="openEnchant(v.index)">
+                        <!-- enchant options have no icon in the client -->
+                        <img v-if="slot().enchants[v.index]!.hasIcon" :src="iconUrl(slot().enchants[v.index]!.id)" alt="" />
+                        <v-icon v-else icon="mdi-auto-fix" size="12" color="#7c3aed" />
+                      </div>
+                    </template>
+                    <ItemTooltip :item="slot().enchants[v.index]!" />
+                  </v-menu>
+                  <div
+                    v-else
+                    class="ro-card-chip enchant"
+                    :class="{ locked: !v.unlocked }"
+                    :title="v.unlocked ? `Enchant ช่อง ${v.position}` : `ช่อง ${v.position}: ${v.lockReason}`"
+                    @click.stop="openEnchant(v.index)"
+                  >
+                    <v-icon :icon="v.unlocked ? 'mdi-plus' : 'mdi-lock-outline'" size="12" color="grey" />
+                  </div>
+                </template>
+                <span class="text-caption text-medium-emphasis text-truncate">
+                  {{ enchantSlots.filter((v) => slot().enchants[v.index]).map((v) => slot().enchants[v.index]!.name).join(', ') }}
+                </span>
+              </div>
             </div>
           </div>
         </template>
@@ -87,6 +132,14 @@ function onCard(card: ItemSummary | null) {
 
     <ItemPickerDialog v-model="pickerOpen" :title="def.label" :filter="def.filter" @select="store.equip(def.key, $event)" />
     <ItemPickerDialog
+      v-if="def.npcEnchant"
+      v-model="enchantPickerOpen"
+      :title="`Enchant ช่อง ${enchantSlots[enchantIndex]?.position ?? ''} — ${slot().item?.name ?? ''}${enchantRule ? ` (${enchantRule.name})` : ''}`"
+      :filter="{}"
+      :enchant-pool="enchantPool"
+      @select="onEnchant"
+    />
+    <ItemPickerDialog
       v-if="def.cardLocations.length"
       v-model="cardPickerOpen"
       :title="def.enchantSlots ? `Enchant — ${slot().item?.name ?? ''}` : `การ์ดช่อง ${cardIndex + 1} — ${slot().item?.name ?? ''}`"
@@ -100,5 +153,8 @@ function onCard(card: ItemSummary | null) {
 
 <style scoped>
 .slot-hit { cursor: pointer; border-radius: 6px; }
+.ro-card-chip.enchant { border-style: dashed; border-color: #7c3aed; }
+.ro-card-chip.enchant.filled { border-style: solid; background: rgba(124, 58, 237, 0.08); }
+.ro-card-chip.enchant.locked { cursor: not-allowed; opacity: 0.5; border-color: #9ca3af; }
 .slot-hit:hover { background: rgba(37, 99, 235, 0.06); }
 </style>
