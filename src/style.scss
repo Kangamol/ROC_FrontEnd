@@ -143,3 +143,17 @@ h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-
   .stat-bonus { color: #15803d; margin-left: 4px; }
   .stat-bonus.bad { color: #dc2626; }
 }
+
+// details popup opened from an equipment slot (v-menu content is teleported to the overlay container)
+.ro-pop {
+  max-height: min(80vh, 720px);
+  overflow-y: auto;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(30, 58, 138, 0.18);
+  background: #fff;
+  .ro-tooltip { box-shadow: none; border-radius: 14px 14px 0 0; border-bottom: none; }
+  .ro-actions-pop {
+    position: sticky; bottom: 0; display: flex; gap: 8px;
+    background: #fff; border: 1px solid $line; border-top: 1px dashed $line; border-radius: 0 0 14px 14px; padding: 10px 14px;
+  }
+}
